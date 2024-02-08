@@ -5,9 +5,9 @@ import { Typography, Grid, Paper, Button, Link } from '@mui/material';
 const Dashboard = () => {
   // Example Data
   const overviewData = {
-    totalUsers: 1000,
-    activeUsers: 800,
-    blockedUsers: 20,
+    totalAttempts: 1000,
+    regularAttempts: 800,
+    attackAttempts: 20,
   };
 
   const recentAlerts = [
@@ -34,9 +34,9 @@ const Dashboard = () => {
             <Typography variant="h6" gutterBottom>
               Overview
             </Typography>
-            <Typography variant="body1">Total Users: {overviewData.totalUsers}</Typography>
-            <Typography variant="body1">Active Users: {overviewData.activeUsers}</Typography>
-            <Typography variant="body1">Blocked Users: {overviewData.blockedUsers}</Typography>
+            <Typography variant="body1">Benign Attacks: {overviewData.totalAttempts}</Typography>
+            <Typography variant="body1">DoS Attacks: {overviewData.regularAttempts}</Typography>
+            <Typography variant="body1">Web Attacks: {overviewData.attackAttempts}</Typography>
             <br/>
             <Button variant="outlined" color="primary" onClick={() => console.log('Review and update user access permissions')}>
               Review User Permissions
