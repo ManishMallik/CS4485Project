@@ -10,11 +10,13 @@
 }
 
 .section {
-  padding: 20px;
+  /* padding: 20px; */
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  height: 100%;
+  width: 100%;
 }
 
 .App button {
@@ -51,8 +53,8 @@
 }
 
 .bottom-left button, .bottom-right button {
-  height: 40%px;
-  width: 40%px;
+  height: 40%;
+  width: 40%;
 }
 
 .upload-section {
