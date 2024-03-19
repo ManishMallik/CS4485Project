@@ -53,8 +53,8 @@
 }
 
 .bottom-left button, .bottom-right button {
-  height: 40%;
-  width: 40%;
+  height: 20%;
+  width: 30%;
 }
 
 .upload-section {
@@ -104,4 +104,16 @@ button:hover {
 
 .results p{
   margin: 0;
+}
+
+.action-buttons {
+  height: 30%;
+  width: 70%;
+  flex-direction: row;
+  display: flex;
+}
+
+.action-buttons button {
+  height: 70%;
+  width: 100%;
 }
