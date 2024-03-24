@@ -331,7 +331,7 @@ export default function EnhancedTable() {
                       scope="row"
                       padding="none"
                     >
-                      {row.name}
+                      {row.time}
                     </TableCell>
                     <TableCell align="right">{row.model}</TableCell>
                     <TableCell align="right">{row.dataset}</TableCell>

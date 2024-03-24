@@ -57,9 +57,10 @@
   flex-direction: column;
 }
 
+
 .bottom-left button, .bottom-right button {
-  height: 20%;
-  width: 30%;
+  height: 10%;
+  width: 20%;
 }
 
 .top-right button {
@@ -83,7 +84,7 @@
 }
 
 .data-section {
-  height: 100%;
+  height: 40%;
   width: 100%;
   display: flex;
   flex-direction: row;
@@ -102,13 +103,11 @@ button:hover {
 }
 
 .past-results-table {
-  background-color: #020F17;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  border-radius: 10px;
-  margin-bottom: 30px;
+  margin-bottom: 10px;
 }
 
 .past-results-table {
