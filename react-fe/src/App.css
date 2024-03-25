@@ -1,3 +1,26 @@
+.selected {
+  margin-top: 10px;
+  margin-left: 10px;
+  background-color: #77ACA2;
+  color: #E7E0D3;
+  font-weight: bold;
+  border-radius: 10px;
+  border-color: #ffffffa6;
+  padding: 10px 20px;  
+  cursor: pointer;
+  font-size: 20px;
+  background-color: #0B344E; /* New background color when selected */
+}
+
+/* Update hover style for selected buttons */
+.selected:hover {
+  background-color: #0B344E; /* Background color on hover for selected buttons */
+}
+
+.button {
+  transition: background-color 0.5s ease;
+}
+
 .App {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -6,18 +29,45 @@
   height: 100vh;
   background-color: #031926;
   color: white;
-  overflow: scroll;
+}
+
+.results {
+  align-self: center;
+  justify-self: center;
+  height: 50%;
+  width: 70%;
+  align-items: center;
+  justify-content: center;
+  display: grid;
+  background-color: #020F17;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  gap: 20px;
+  border-radius: 20px;
+  padding: 2% 0;
+}
+.results div{
+  display:flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timeStamp{
+  grid-column: span 2; 
+  
 }
 
 .section {
-  padding: 20px;
+  /* padding: 20px; */
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  height: 100%;
+  width: 100%;
 }
 
-.App button {
+.button {
   margin-top: 10px;
   margin-left: 10px;
   background-color: #77ACA2;
@@ -25,32 +75,57 @@
   font-weight: bold;
   border-radius: 10px;
   border-color: #ffffffa6;
-  padding: 10px 20px;
+  padding: 10px 20px;  
   cursor: pointer;
   font-size: 20px;
 }
 
-.top-right button {
-  height: 200px;
-  width: 200px;
-  margin-top: 30px;
+.runButton{
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.bottom-left button, .bottom-right button {
-  height: 50px;
-  width: 150px;
-}
-
-.upload-section {
-  background-color: #020F17;
-  height: 200px;
-  width: 400px;
+.top-right, .bottom-right {
   display: flex;
   flex-direction: column;
+}
+
+
+.bottom-left button, .bottom-right button {
+  height: 10%;
+  width: 20%;
+  /* padding-bottom: 3%; */
+}
+
+.top-right button {
+  height: 70%;
+  width: 100%;
+  /*margin-top: 30px;*/
+}
+
+.data-section button {
+  height: 50%;
+  width: 45%;
+}
+
+.model-buttons {
+  display: flex;
+  flex-direction: row;
+  height: 50%;
+  width: 80%;
+  justify-content: center;
+  align-items: center;
+}
+
+.data-section {
+  height: 40%;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
   border-radius: 10px;
-  margin-bottom: 30px;
 }
 
 .App h2 {
@@ -58,34 +133,44 @@
   font-size: 30px;
 }
 
-button:hover {
+.button:hover {
   background-color: #0B344E;
+  transition:  0.5s ease;
 }
 
-.results, .past-results-table {
-  background-color: #020F17;
+
+.past-results-table {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  border-radius: 10px;
-  margin-bottom: 30px;
+  /* margin-bottom: 0px; */
 }
 
 .past-results-table {
-  height: 200px;
-  width: 500px;
+  height: 50%;
+  width: 80%;
 }
 
-.results {
-  height: 250px;
-  width: 500px;
-  padding: 10px;
-  display: flex;
-  justify-content: space-around;
-  align-items: start;
-}
 
 .results p{
   margin: 0;
+}
+
+.action-buttons {
+  height: 50%;
+  width: 70%;
+  /* flex-direction: row; */
+  margin-top: 1%;
+  align-items: flex-start;
+  justify-content: center;
+  display: flex;
+}
+
+.action-buttons button {
+  height: 50%;
+  width: 80%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
