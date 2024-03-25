@@ -1,7 +1,9 @@
 from sqlalchemy import text
 from flask import Flask, request, jsonify
+from flask_cors import CORS, cross_origin
 from sqlalchemy import create_engine
 app = Flask(__name__)
+cors = CORS(app)
 @app.route("/sendinfo")
 def sendinfo():
     # model_type is {LCCDE, Tree Based, MST} dataset is {non_km, km}

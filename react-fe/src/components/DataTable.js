@@ -31,21 +31,6 @@ function createData(id, time, model, dataset) {
   };
 }
 
-const rows = [
-  createData(23, 23, 23, 23),
-  createData(2, 2, 2, 2),
-  createData(3, 3, 3, 3),
-  createData(4, 4, 4, 4),
-  createData(5, 5, 5, 5),
-  createData(6, 6, 6, 6),
-  createData(7, 7, 7, 7),
-  createData(8, 8, 8, 8),
-  createData(9, 9, 9, 9),
-  createData(10, 10, 10, 10),
-  createData(11, 11, 11, 11),
-  createData(12, 12, 12, 12),
-  createData(13, 13, 13, 13),
-];
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -219,6 +204,22 @@ export default function EnhancedTable() {
   const [page, setPage] = React.useState(0);
   const [dense, setDense] = React.useState(true);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
+  const [rows, setRows] = React.useState([])
+  const [updated, setUpdated] = React.useState(false)
+  React.useEffect(() =>{
+    fetch("http://localhost:5000/getinfo")
+    .then((response) => response.json())
+    .then((res)=>{
+      res.forEach(element => {
+        let object = {}
+        setRows(oldArray => [...oldArray, {"id": element.id, "time": element.time, "model": element.model, "dataset": element.dataset}])
+      });
+    })
+  }, [])
+  React.useEffect(()=>{
+    console.log(rows);
+    setUpdated(true)
+  }, [rows])
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -301,7 +302,7 @@ export default function EnhancedTable() {
               rowCount={rows.length}
             />
             <TableBody>
-              {visibleRows.map((row, index) => {
+              {rows.map((row, index) => {
                 const isItemSelected = isSelected(row.id);
                 const labelId = `enhanced-table-checkbox-${index}`;
 
@@ -331,7 +332,7 @@ export default function EnhancedTable() {
                       scope="row"
                       padding="none"
                     >
-                      {row.name}
+                      {row.time}
                     </TableCell>
                     <TableCell align="right">{row.model}</TableCell>
                     <TableCell align="right">{row.dataset}</TableCell>
