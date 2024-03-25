@@ -1,13 +1,23 @@
-.App button.selected {
+.selected {
+  margin-top: 10px;
+  margin-left: 10px;
+  background-color: #77ACA2;
+  color: #E7E0D3;
+  font-weight: bold;
+  border-radius: 10px;
+  border-color: #ffffffa6;
+  padding: 10px 20px;  
+  cursor: pointer;
+  font-size: 20px;
   background-color: #0B344E; /* New background color when selected */
 }
 
 /* Update hover style for selected buttons */
-.App button.selected:hover {
+.selected:hover {
   background-color: #0B344E; /* Background color on hover for selected buttons */
 }
 
-button {
+.button {
   transition: background-color 0.5s ease;
 }
 
@@ -19,7 +29,6 @@ button {
   height: 100vh;
   background-color: #031926;
   color: white;
-  overflow: scroll;
 }
 
 .results {
@@ -35,11 +44,17 @@ button {
   grid-template-rows: 1fr 1fr 1fr;
   gap: 20px;
   border-radius: 20px;
+  padding: 2% 0;
 }
 .results div{
   display:flex;
   align-items: center;
   justify-content: center;
+}
+
+.timeStamp{
+  grid-column: span 2; 
+  
 }
 
 .section {
@@ -52,7 +67,7 @@ button {
   width: 100%;
 }
 
-.App button {
+.button {
   margin-top: 10px;
   margin-left: 10px;
   background-color: #77ACA2;
@@ -60,9 +75,15 @@ button {
   font-weight: bold;
   border-radius: 10px;
   border-color: #ffffffa6;
-  padding: 10px 20px;
+  padding: 10px 20px;  
   cursor: pointer;
   font-size: 20px;
+}
+
+.runButton{
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .top-right, .bottom-right {
@@ -74,7 +95,7 @@ button {
 .bottom-left button, .bottom-right button {
   height: 10%;
   width: 20%;
-  padding-bottom: 3%;
+  /* padding-bottom: 3%; */
 }
 
 .top-right button {
@@ -112,7 +133,7 @@ button {
   font-size: 30px;
 }
 
-button:hover {
+.button:hover {
   background-color: #0B344E;
   transition:  0.5s ease;
 }
@@ -123,11 +144,11 @@ button:hover {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  margin-bottom: 0px;
+  /* margin-bottom: 0px; */
 }
 
 .past-results-table {
-  height: 100%;
+  height: 50%;
   width: 80%;
 }
 
@@ -137,13 +158,19 @@ button:hover {
 }
 
 .action-buttons {
-  height: 30%;
+  height: 50%;
   width: 70%;
-  flex-direction: row;
+  /* flex-direction: row; */
+  margin-top: 1%;
+  align-items: flex-start;
+  justify-content: center;
   display: flex;
 }
 
 .action-buttons button {
-  height: 70%;
-  width: 100%;
+  height: 50%;
+  width: 80%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

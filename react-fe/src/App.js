@@ -5,7 +5,11 @@ import DataTable from './components/DataTable.js';
 function App() {
   const [selectedModel, setSelectedModel] = useState(null);
   const [selectedData, setSelectedData] = useState(null);
-  const [pastResults, setPastResults] = useState([]);
+  const [result, setResult] = useState({"benign":0,"bot":0,"bruteforce":0,"dataset":0,"dos":0,"id":0,"infiltration":0,"model":0,"portscan":0,"time":"NULL","webattack":0})
+  const [presult, setPresult] = useState({})
+  useEffect(()=>{
+    setPresult(result)
+  }, [result])
 
   const handleModelSelect = (model) => {
     setSelectedModel(model);
@@ -32,8 +36,15 @@ function App() {
   const handleRunAlgorithm = (m, d) => {
     // Implement logic to run the selected algorithm
     // and update pastResults state
-    setSelectedModel(null);
-    setSelectedData(null);
+    if(selectedModel != null && selectedData != null){
+      fetch(`http://localhost:5000/sendinfo?model_type=${selectedModel}&dataset=${selectedData}`)
+      .then((response)=>response.json())
+      .then((data) =>{
+        setResult(data)
+      })
+      setSelectedModel(null);
+      setSelectedData(null);
+    }
   };
 
   const handleViewResults = () => {
@@ -54,19 +65,19 @@ function App() {
       <div className="top-right section">
         <h2>Choose a Model</h2>
         <div className="model-buttons">
-          <button 
-            className={selectedModel === "Model1" ? "selected" : ""}
-            onClick={() => handleModelSelect("Model1")}
+          <button
+            className={selectedModel == 1 ? "selected" : " button"}
+            onClick={() => handleModelSelect(1)}
           >LCCDE
           </button>
-          <button 
-            className={selectedModel === "Model2" ? "selected" : ""}
-            onClick={() => handleModelSelect("Model2")}
+          <button
+            className={selectedModel === 2 ? "selected" : "button"}
+            onClick={() => handleModelSelect(2)}
           >Tree Based
           </button>
-          <button 
-            className={selectedModel === "Model3" ? "selected" : ""}
-            onClick={() => handleModelSelect("Model3")}
+          <button
+            className={selectedModel === 3 ? "selected" : " button"}
+            onClick={() => handleModelSelect(3)}
           >MTH
           </button>
         </div>
@@ -74,41 +85,40 @@ function App() {
       <div className="top-left section">
         <h2>Results</h2>
         <div className="results">
-          <div><p>TimeStamp: 0</p></div>
-          <div><p>RunNumber: 0</p></div>
-          <div><p>BENIGN: 0</p></div>
-          <div><p>DoS: 0</p></div>
-          <div><p>PortScan: 0</p></div>
-          <div><p>Bot: 0</p></div>
-          <div><p>Infiltration: 0</p></div>
-          <div><p>WebAttack: 0</p></div>
-          <div><p>BruteForce: 0</p></div>
+          <div><p>BENIGN: {result.benign}</p></div>
+          <div><p>DoS: {result.dos}</p></div>
+          <div><p>PortScan: {result.portscan}</p></div>
+          <div><p>Bot: {result.bot}</p></div>
+          <div><p>Infiltration: {result.infiltration}</p></div>
+          <div><p>WebAttack: {result.webattack}</p></div>
+          <div className='timeStamp'><p>Time: {result.time}</p></div>
+          <div><p>BruteForce: {result.bruteforce}</p></div>
         </div>
       </div>
       <div className="bottom-right section">
         <h2>Choose a Dataset</h2>
         <div className="data-section">
           <button 
-          className={selectedData === "Data1" ? "selected" : ""}
-          onClick={() => handleDataSelect("Data1")}
+          className={selectedData == 1 ? "selected" : "button"}
+          onClick={() => {handleDataSelect(1)}}
           >CICIDS2017_sample.csv
           </button>
           <button 
-          className={selectedData === "Data2" ? "selected" : ""}
-          onClick={() => handleDataSelect("Data2")}
+          className={selectedData == 2 ? "selected" : "button"}
+          onClick={() => handleDataSelect(2)}
           >CICIDS2017_sample_km.csv
           </button>
         </div>
-        <button onClick={handleRunAlgorithm}>Run</button>
+        <button className="runButton button" onClick={handleRunAlgorithm}>Run</button>
       </div>
       <div className="bottom-left section">
         <h2>Past Results</h2>
         {/* Display past results in a table */}
         <div className="past-results-table">
-          <DataTable></DataTable>
+          <DataTable passed_result={presult}></DataTable>
         </div>
         <div className="action-buttons">
-          <button onClick={handleCompareResults}>Compare</button>
+          <button className="button" onClick={handleCompareResults}>Compare</button>
         </div>
       </div>
     </div>

@@ -1,4 +1,5 @@
 from sqlalchemy import text
+import random
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 from sqlalchemy import create_engine
@@ -12,9 +13,9 @@ def sendinfo():
     if model_num == 1:
         model_type = "LCCDE"
     elif model_num == 2:
-        model_type == "Tree Based"
+        model_type = "Tree Based"
     elif model_num == 3:
-        model_type == "MST"
+        model_type = "MST"
     dataset_num = int(request.args.get('dataset'))
     if dataset_num == 1:
         dataset = "data/CICIDS2017_sample.csv"
@@ -26,13 +27,28 @@ def sendinfo():
     f = open("/home/ash/Projects/CS4485Project/og-be/.secrets", "r")
     secret = f.read().strip()
     engine = create_engine(f"mysql+pymysql://{secret}@72.182.161.176/IDS")
+    dict = {}
+
     with engine.connect() as conn:
         conn.execute(
-            text(f"INSERT INTO Results (model, benign, dos, portscan, bot, infiltration, webattack, bruteforce, dataset) VALUES ({model_num}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {dataset_num})")
+            text(f"INSERT INTO Results (model, benign, dos, portscan, bot, infiltration, webattack, bruteforce, dataset) VALUES ({model_num}, {random.randint(0, 100)}, {random.randint(0, 100)}, {random.randint(0, 100)}, {random.randint(0, 100)}, {random.randint(0, 100)}, {random.randint(0, 100)}, {random.randint(0, 100)}, {dataset_num})")
         )
         conn.commit()
-    # step 4: return thr output to the front end
-    return f"model_type = {model_type}\n dataset = {dataset}"
+        recent = conn.execute(text("SELECT DATE_FORMAT(time, '%Y-%m-%d %H:%i:%s') AS time, model, benign, bot, bruteforce, dataset, dos, id, infiltration, portscan, webattack FROM Results ORDER BY time DESC")).fetchall()[0];
+        dict = {}
+        dict["time"] = recent[0]
+        dict["model"] = recent[1]
+        dict["benign"] = recent[2]
+        dict["bot"] = recent[3]
+        dict["bruteforce"] = recent[4]
+        dict["dataset"] = recent[5]
+        dict["dos"] = recent[6]
+        dict["id"] = recent[7]
+        dict["infiltration"] = recent[8]
+        dict["portscan"] = recent[9]
+        dict["webattack"] = recent[10]
+    # step 4: return the output to the front end
+    return dict
 @app.route("/getinfo")
 # For past results to query all the previous results
 def getinfo():
