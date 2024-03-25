@@ -31,7 +31,6 @@ function createData(id, time, model, dataset) {
   };
 }
 
-
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
     return -1;
@@ -198,6 +197,9 @@ EnhancedTableToolbar.propTypes = {
 };
 
 export default function EnhancedTable() {
+    React.useEffect(()=>{
+        console.log(rows);
+    }, [])
   const [order, setOrder] = React.useState('desc');
   const [orderBy, setOrderBy] = React.useState('time');
   const [selected, setSelected] = React.useState([]);
@@ -289,7 +291,7 @@ export default function EnhancedTable() {
         <EnhancedTableToolbar numSelected={selected.length} />
         <TableContainer>
           <Table
-            sx={{ minWidth: 750 }}
+            sx={{ minWidth: 10 }}
             aria-labelledby="tableTitle"
             size={dense ? 'small' : 'medium'}
           >

@@ -1,3 +1,16 @@
+.App button.selected {
+  background-color: #0B344E; /* New background color when selected */
+}
+
+/* Update hover style for selected buttons */
+.App button.selected:hover {
+  background-color: #0B344E; /* Background color on hover for selected buttons */
+}
+
+button {
+  transition: background-color 0.5s ease;
+}
+
 .App {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -57,9 +70,11 @@
   flex-direction: column;
 }
 
+
 .bottom-left button, .bottom-right button {
-  height: 20%;
-  width: 30%;
+  height: 10%;
+  width: 20%;
+  padding-bottom: 3%;
 }
 
 .top-right button {
@@ -70,7 +85,7 @@
 
 .data-section button {
   height: 50%;
-  width: 30%;
+  width: 45%;
 }
 
 .model-buttons {
@@ -83,7 +98,7 @@
 }
 
 .data-section {
-  height: 100%;
+  height: 40%;
   width: 100%;
   display: flex;
   flex-direction: row;
@@ -99,16 +114,16 @@
 
 button:hover {
   background-color: #0B344E;
+  transition:  0.5s ease;
 }
 
+
 .past-results-table {
-  background-color: #020F17;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  border-radius: 10px;
-  margin-bottom: 30px;
+  margin-bottom: 0px;
 }
 
 .past-results-table {
@@ -116,14 +131,6 @@ button:hover {
   width: 80%;
 }
 
-/* .results {
-  height: 100%;
-  width: 70%;
-  padding: 10px;
-  display: flex;
-  justify-content: space-around;
-  align-items: start;
-} */
 
 .results p{
   margin: 0;
