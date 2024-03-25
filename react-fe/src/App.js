@@ -1,25 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect} from 'react';
 import './App.css';
 import DataTable from './components/DataTable.js';
 
 function App() {
   const [selectedModel, setSelectedModel] = useState(null);
-  const [uploadedDataset, setUploadedDataset] = useState(null);
+  const [selectedData, setSelectedData] = useState(null);
   const [pastResults, setPastResults] = useState([]);
 
   const handleModelSelect = (model) => {
     setSelectedModel(model);
+    if (selectedModel == model) {
+      setSelectedModel(null);
+    }
   };
 
-  const handleDatasetUpload = (e) => {
-    const file = e.target.files[0];
-    // Process the uploaded dataset file
-    setUploadedDataset(file);
+  const handleDataSelect = (data) => {
+    setSelectedData(data);
+    if (selectedData == data) {
+      setSelectedData(null);
+    }
   };
 
-  const handleRunAlgorithm = () => {
+  const handleButtonClick = (buttonType, value) => {
+    if (buttonType === 'model') {
+      setSelectedModel(value);
+    } else if (buttonType === 'data') {
+      setSelectedData(value);
+    }
+  };
+
+  const handleRunAlgorithm = (m, d) => {
     // Implement logic to run the selected algorithm
     // and update pastResults state
+    setSelectedModel(null);
+    setSelectedData(null);
   };
 
   const handleViewResults = () => {
@@ -34,14 +48,27 @@ function App() {
     // Implement logic to compare past results
   };
 
+
   return (
     <div className="App">
       <div className="top-right section">
         <h2>Choose a Model</h2>
         <div className="model-buttons">
-          <button onClick={() => handleModelSelect("Model1")}>LCCDE</button>
-          <button onClick={() => handleModelSelect("Model2")}>Tree Based</button>
-          <button onClick={() => handleModelSelect("Model3")}>MTH</button>
+          <button 
+            className={selectedModel === "Model1" ? "selected" : ""}
+            onClick={() => handleModelSelect("Model1")}
+          >LCCDE
+          </button>
+          <button 
+            className={selectedModel === "Model2" ? "selected" : ""}
+            onClick={() => handleModelSelect("Model2")}
+          >Tree Based
+          </button>
+          <button 
+            className={selectedModel === "Model3" ? "selected" : ""}
+            onClick={() => handleModelSelect("Model3")}
+          >MTH
+          </button>
         </div>
       </div>
       <div className="top-left section">
@@ -59,10 +86,18 @@ function App() {
         </div>
       </div>
       <div className="bottom-right section">
-        <h2>Upload Dataset</h2>
+        <h2>Choose a Dataset</h2>
         <div className="data-section">
-          <button onClick={() => handleModelSelect("Data1")}>Dataset 1</button>
-          <button onClick={() => handleModelSelect("Data2")}>Dataset 2</button>
+          <button 
+          className={selectedData === "Data1" ? "selected" : ""}
+          onClick={() => handleDataSelect("Data1")}
+          >CICIDS2017_sample.csv
+          </button>
+          <button 
+          className={selectedData === "Data2" ? "selected" : ""}
+          onClick={() => handleDataSelect("Data2")}
+          >CICIDS2017_sample_km.csv
+          </button>
         </div>
         <button onClick={handleRunAlgorithm}>Run</button>
       </div>
@@ -73,8 +108,6 @@ function App() {
           <DataTable></DataTable>
         </div>
         <div className="action-buttons">
-          <button onClick={handleViewResults}>View</button>
-          <button onClick={handleRunAgain}>Run Again</button>
           <button onClick={handleCompareResults}>Compare</button>
         </div>
       </div>
