@@ -46,6 +46,8 @@ def sendinfo():
         dataset = "data/CICIDS2017_sample_km.csv"
 
     # step 2: run the selected model with the selected dataset
+    run_LCCDE()
+
     # step 3: save the output to the sql database
     f = open("/home/ash/Projects/CS4485Project/og-be/.secrets", "r")
     secret = f.read().strip()
@@ -128,6 +130,31 @@ def run_LCCDE():
     f1_average = f1_score(yt, yp, average='weighted')
     f1_per_class = f1_score(yt, yp, average=None)
 
+    predict_dict = {}
+    predict_dict["benign"] = 0
+    predict_dict["bot"] = 0
+    predict_dict["bruteforce"] = 0
+    predict_dict["dos"] = 0
+    predict_dict["infiltration"] = 0
+    predict_dict["portscan"] = 0
+    predict_dict["webattack"] = 0
+
+    for i in yp:
+        if i == 0:
+            predict_dict["benign"] += 1
+        elif i == 1:
+            predict_dict["bot"] += 1
+        elif i == 2:
+            predict_dict["bruteforce"] += 1
+        elif i == 3:
+            predict_dict["dos"] += 1
+        elif i == 4:
+            predict_dict["infiltration"] += 1
+        elif i == 5:
+            predict_dict["portscan"] += 1
+        elif i == 6:
+            predict_dict["webattack"] += 1
+    
     # Format the output string
     output_str = (
         f"Accuracy of LCCDE: {accuracy}\n"
@@ -135,10 +162,10 @@ def run_LCCDE():
         f"Recall of LCCDE: {recall}\n"
         f"Average F1 of LCCDE: {f1_average}\n"
         f"F1 of LCCDE for each type of attack: {f1_per_class}\n"
-        f"Predicted values: {yp}"
+        f"Dictionary: {predict_dict}\n"
     )
 
-    return output_str
+    return output_str, predict_dict
 
 # Define your LCCDE function with proper model weights
 def LCCDE(X_test, y_test, m1, m2, m3):
