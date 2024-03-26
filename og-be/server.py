@@ -134,7 +134,8 @@ def run_LCCDE():
         f"Precision of LCCDE: {precision}\n"
         f"Recall of LCCDE: {recall}\n"
         f"Average F1 of LCCDE: {f1_average}\n"
-        f"F1 of LCCDE for each type of attack: {f1_per_class}"
+        f"F1 of LCCDE for each type of attack: {f1_per_class}\n"
+        f"Predicted values: {yp}"
     )
 
     return output_str
