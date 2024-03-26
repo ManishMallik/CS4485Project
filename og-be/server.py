@@ -28,6 +28,17 @@ from statistics import mode
 with open('model_list.pkl', 'rb') as f:
     model = pickle.load(f)
 
+#wrapper
+def run_model(model_name, dataset):
+    if model_name == "LCCDE":
+        return run_LCCDE(dataset);
+    elif model_name == "Tree Based":
+        return {}
+    elif model_name == "MTH":
+        return {}
+    
+
+
 @app.route("/sendinfo")
 def sendinfo():
     # model_type is {LCCDE, Tree Based, MST} dataset is {non_km, km}
@@ -46,7 +57,7 @@ def sendinfo():
         dataset = "data/CICIDS2017_sample_km.csv"
 
     # step 2: run the selected model with the selected dataset
-    run_LCCDE()
+    output = run_model(model_type, dataset)
 
     # step 3: save the output to the sql database
     f = open("/home/ash/Projects/CS4485Project/og-be/.secrets", "r")
@@ -56,7 +67,7 @@ def sendinfo():
 
     with engine.connect() as conn:
         conn.execute(
-            text(f"INSERT INTO Results (model, benign, dos, portscan, bot, infiltration, webattack, bruteforce, dataset) VALUES ({model_num}, {random.randint(0, 100)}, {random.randint(0, 100)}, {random.randint(0, 100)}, {random.randint(0, 100)}, {random.randint(0, 100)}, {random.randint(0, 100)}, {random.randint(0, 100)}, {dataset_num})")
+            text(f"INSERT INTO Results (model, benign, dos, portscan, bot, infiltration, webattack, bruteforce, dataset) VALUES ({model_num}, {output['benign']}, {output['dos']}, {output['portscan']}, {output['bot']}, {output['infiltration']}, {output['webattack']}, {output['bruteforce']}, {dataset_num})")
         )
         conn.commit()
         recent = conn.execute(text("SELECT DATE_FORMAT(time, '%Y-%m-%d %H:%i:%s') AS time, model, benign, bot, bruteforce, dataset, dos, id, infiltration, portscan, webattack FROM Results ORDER BY time DESC")).fetchall()[0];
@@ -100,10 +111,10 @@ def getinfo():
 
 # This is just a test
 @app.route('/LCCDE')
-def run_LCCDE():
+def run_LCCDE(filename):
     
     # filename = 'CICIDS2017_sample1.csv'
-    filename = 'CICIDS2017_sample_km1.csv'
+    # filename = 'CICIDS2017_sample_km1.csv'
     # Read the uploaded CSV file into a DataFrame
     print('FILE READ')
     df = pd.read_csv(filename)
@@ -165,7 +176,7 @@ def run_LCCDE():
         f"Dictionary: {predict_dict}\n"
     )
 
-    return output_str, predict_dict
+    return predict_dict
 
 # Define your LCCDE function with proper model weights
 def LCCDE(X_test, y_test, m1, m2, m3):
