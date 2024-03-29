@@ -209,7 +209,7 @@ export default function EnhancedTable() {
   const [rows, setRows] = React.useState([])
   const [updated, setUpdated] = React.useState(false)
   React.useEffect(() =>{
-    fetch("http://localhost:5000/getinfo")
+    fetch("http://127.0.0.1:5000/getinfo")
     .then((response) => response.json())
     .then((res)=>{
       res.forEach(element => {

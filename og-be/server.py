@@ -23,7 +23,7 @@ def sendinfo():
 
     # step 2: run the selected model with the selected dataset
     # step 3: save the output to the sql database
-    f = open("/home/ash/Projects/CS4485Project/og-be/.secrets", "r")
+    f = open("/Users/alekhyaadonthireddy/Documents/CS 4485/CS4485Project/og-be/.secrets", "r")
     secret = f.read().strip()
     engine = create_engine(f"mysql+pymysql://{secret}@72.182.161.176/IDS")
     with engine.connect() as conn:
@@ -36,7 +36,7 @@ def sendinfo():
 @app.route("/getinfo")
 # For past results to query all the previous results
 def getinfo():
-    f = open("/home/ash/Projects/CS4485Project/og-be/.secrets", "r")
+    f = open("/Users/alekhyaadonthireddy/Documents/CS 4485/CS4485Project/og-be/.secrets", "r")
     secret = f.read().strip()
     engine = create_engine(f"mysql+pymysql://{secret}@72.182.161.176/IDS")
     arr = []
