@@ -196,33 +196,33 @@ EnhancedTableToolbar.propTypes = {
   numSelected: PropTypes.number.isRequired,
 };
 
-export default function EnhancedTable() {
-    React.useEffect(()=>{
-        console.log(rows);
-    }, [])
+export default function EnhancedTable(props) {
   const [order, setOrder] = React.useState('desc');
   const [orderBy, setOrderBy] = React.useState('time');
   const [selected, setSelected] = React.useState([]);
   const [page, setPage] = React.useState(0);
   const [dense, setDense] = React.useState(true);
-  const [rowsPerPage, setRowsPerPage] = React.useState(5);
+  const [rowsPerPage, setRowsPerPage] = React.useState(2);
   const [rows, setRows] = React.useState([])
-  const [updated, setUpdated] = React.useState(false)
   React.useEffect(() =>{
     fetch("http://127.0.0.1:5000/getinfo")
     .then((response) => response.json())
+    .then((res)=>{
+      setRows([])
+      return res; 
+    })
     .then((res)=>{
       res.forEach(element => {
         let object = {}
         setRows(oldArray => [...oldArray, {"id": element.id, "time": element.time, "model": element.model, "dataset": element.dataset}])
       });
     })
-  }, [])
-  React.useEffect(()=>{
-    console.log(rows);
-    setUpdated(true)
-  }, [rows])
-
+  }, [props.passed_result])
+  // React.useEffect(()=>{
+  //   if(props.passed_result.time != "NULL" && props.passed_result.time != null){
+  //     setRows(oldArray => [{"id": props.passed_result.id, "time": props.passed_result.time, "model": props.passed_result.model, "dataset": props.passed_result.dataset}, ...oldArray])
+  //   }
+  // }, [props.passed_result])
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
@@ -282,7 +282,7 @@ export default function EnhancedTable() {
         page * rowsPerPage,
         page * rowsPerPage + rowsPerPage,
       ),
-    [order, orderBy, page, rowsPerPage],
+    [order, orderBy, page, rowsPerPage, rows],
   );
 
   return (
@@ -304,7 +304,7 @@ export default function EnhancedTable() {
               rowCount={rows.length}
             />
             <TableBody>
-              {rows.map((row, index) => {
+              {visibleRows.map((row, index) => {
                 const isItemSelected = isSelected(row.id);
                 const labelId = `enhanced-table-checkbox-${index}`;
 
@@ -331,7 +331,7 @@ export default function EnhancedTable() {
                     <TableCell
                       component="th"
                       id={labelId}
-                      scope="row"
+                      // scope="row"
                       padding="none"
                     >
                       {row.time}
@@ -354,7 +354,7 @@ export default function EnhancedTable() {
           </Table>
         </TableContainer>
         <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
+          rowsPerPageOptions={[2]}
           component="div"
           count={rows.length}
           rowsPerPage={rowsPerPage}
