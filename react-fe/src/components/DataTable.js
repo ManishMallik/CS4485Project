@@ -218,11 +218,11 @@ export default function EnhancedTable(props) {
       });
     })
   }, [props.passed_result])
-  // React.useEffect(()=>{
-  //   if(props.passed_result.time != "NULL" && props.passed_result.time != null){
-  //     setRows(oldArray => [{"id": props.passed_result.id, "time": props.passed_result.time, "model": props.passed_result.model, "dataset": props.passed_result.dataset}, ...oldArray])
-  //   }
-  // }, [props.passed_result])
+  React.useEffect(()=>{
+    if(props.passed_result.time != "NULL" && props.passed_result.time != null){
+      setRows(oldArray => [{"id": props.passed_result.id, "time": props.passed_result.time, "model": props.passed_result.model, "dataset": props.passed_result.dataset}, ...oldArray])
+    }
+  }, [props.passed_result])
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
