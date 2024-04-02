@@ -174,3 +174,74 @@
   align-items: center;
   justify-content: center;
 }
+
+.compare-results-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.compare-results-container {
+  background-color:#0B344E;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  max-width: 80%;
+  max-height: 80%;
+  overflow: auto;
+}
+
+.compare-results-container h2, h3 {
+  color:#77ACA2
+}
+
+.compare-results-container p{
+  color:#E7E0D3
+}
+
+
+.compare-results-container h2 {
+  margin-top: 0;
+}
+
+.compare-results {
+  display: flex;
+  justify-content: space-between;
+}
+
+.compare-results div {
+  flex: 1;
+  margin-right: 10px;
+}
+
+.compare-results div:last-child {
+  margin-right: 0;
+}
+
+.compare-results h3 {
+  margin-top: 0;
+}
+
+button {
+  padding: 8px 16px;
+  background-color: #77ACA2; /* Blue color */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+button:hover {
+  background-color: #77ACA2; /* Darker blue on hover */
+}
+
+.LoadingButton {
+  background-color: #77ACA2;
+}

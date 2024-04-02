@@ -63,7 +63,7 @@ def sendinfo():
     # step 3: save the output to the sql database
     f = open("/Users/alekhyaadonthireddy/Documents/CS 4485/CS4485Project/og-be/.secrets", "r")
     secret = f.read().strip()
-    engine = create_engine(f"mysql+pymysql://{secret}@72.182.161.176/IDS")
+    engine = create_engine(f"mysql+pymysql://{secret}@72.182.162.132/IDS")
     dict = {}
 
     with engine.connect() as conn:
@@ -91,7 +91,7 @@ def sendinfo():
 def getinfo():
     f = open("/Users/alekhyaadonthireddy/Documents/CS 4485/CS4485Project/og-be/.secrets", "r")
     secret = f.read().strip()
-    engine = create_engine(f"mysql+pymysql://{secret}@72.182.161.176/IDS")
+    engine = create_engine(f"mysql+pymysql://{secret}@72.182.162.132/IDS")
     arr = []
     with engine.connect() as conn:
         for i in conn.execute(text("SELECT * FROM Results")).fetchall():

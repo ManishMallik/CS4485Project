@@ -1,15 +1,26 @@
 import React, { useState, useEffect} from 'react';
 import './App.css';
 import DataTable from './components/DataTable.js';
+import CompareResultsPopup from './components/CompareResultsPopup.js';
+import LoadingButton from '@mui/lab/LoadingButton';
+
+import { bouncy } from 'ldrs'
+bouncy.register('loading-bounce')
 
 function App() {
   const [selectedModel, setSelectedModel] = useState(null);
   const [selectedData, setSelectedData] = useState(null);
   const [result, setResult] = useState({"benign":0,"bot":0,"bruteforce":0,"dataset":0,"dos":0,"id":0,"infiltration":0,"model":0,"portscan":0,"time":"NULL","webattack":0})
   const [presult, setPresult] = useState({})
+
+  const [compareResultsVisible, setCompareResultsVisible] = useState(false);
+  const [comparedResult1, setComparedResult1] = useState({});
+  const [comparedResult2, setComparedResult2] = useState({});
+
   useEffect(()=>{
     setPresult(result)
   }, [result])
+
 
   const handleModelSelect = (model) => {
     setSelectedModel(model);
@@ -55,9 +66,19 @@ function App() {
     // Implement logic to run the algorithm again using the same dataset and model
   };
 
+  
   const handleCompareResults = () => {
     // Implement logic to compare past results
+    // For demonstration, let's compare the current result with an empty result
+    setComparedResult1(result);
+    setComparedResult2({});
+    setCompareResultsVisible(true);
   };
+
+  const handleCloseCompareResults = () => {
+    setCompareResultsVisible(false);
+  };
+
 
 
   return (
@@ -109,7 +130,7 @@ function App() {
           >CICIDS2017_sample_km.csv
           </button>
         </div>
-        <button className="runButton button" onClick={handleRunAlgorithm}>Run</button>
+        <button /*loading*/ variant="outlined" className="runButton button" onClick={handleRunAlgorithm} >{<loading-bounce size="40"></loading-bounce>}</button>
       </div>
       <div className="bottom-left section">
         <h2>Past Results</h2>
@@ -121,6 +142,15 @@ function App() {
           <button className="button" onClick={handleCompareResults}>Compare</button>
         </div>
       </div>
+
+      {compareResultsVisible && (
+        <CompareResultsPopup
+          results1={comparedResult1}
+          results2={comparedResult2}
+          onClose={handleCloseCompareResults}
+        />
+      )}
+
     </div>
   );
 }
