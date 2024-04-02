@@ -256,5 +256,17 @@ def LCCDE(X_test, y_test, m1, m2, m3):
         yp.append(y_pred) # Save the predicted classes for all tested samples
     return yt, yp
 
+def run_TreeBased():
+    # Load the saved model's weights
+    loaded_model = xgb.Booster()
+    loaded_model.load_model('stk_model.model')
+
+    # Convert the loaded model to a scikit-learn compatible format for predictions
+    xgb_sklearn_model = xgb.XGBClassifier()
+    xgb_sklearn_model._Booster = loaded_model
+
+    # Make predictions with the loaded model
+    y_predict_loaded = xgb_sklearn_model.predict(x_test)
+
 if __name__ == "__main__":
     app.run()
