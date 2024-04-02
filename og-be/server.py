@@ -3,6 +3,7 @@ import random
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 from sqlalchemy import create_engine
+import subprocess
 app = Flask(__name__)
 cors = CORS(app)
 
@@ -258,29 +259,67 @@ def LCCDE(X_test, y_test, m1, m2, m3):
 
 @app.route('/TreeBased')
 def run_TreeBased():
+
+    def run_python_script(script_path):
+        with open(script_path, 'r') as f:
+            script_code = f.read()
+        exec(script_code)
+
+    run_python_script('tree_based_ids_globecom19.py')
+
+    return "Tree Based IDS has been run successfully!"
     
-    filename = 'CICIDS2017_sample1.csv'
-    df = pd.read_csv(filename)
+    # filename = 'CICIDS2017_sample1.csv'
+    # df = pd.read_csv(filename)
 
-    #m3.keys()
-    # Split DataFrame into features (X) and labels (y)
-    X = df.drop(['Label'], axis=1)
-    y = df['Label']
+    # #m3.keys()
+    # # Split DataFrame into features (X) and labels (y)
+    # X = df.drop(['Label'], axis=1)
+    # y = df['Label']
 
-    # Perform train-test split
-    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.95, test_size=0.05, random_state=0)
-    
-    # Load the saved model's weights
-    loaded_model = xgb.Booster()
-    loaded_model.load_model('models/stk_model.model')
+    # # Perform train-test split
+    # X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.95, test_size=0.05, random_state=0)
 
-    # Convert the loaded model to a scikit-learn compatible format for predictions
-    xgb_sklearn_model = xgb.XGBClassifier()
-    xgb_sklearn_model._Booster = loaded_model
+    # # Load the saved model's weights
+    # loaded_model = xgb.Booster()
+    # loaded_model.load_model('models/stk_model.model')
 
-    # Make predictions with the loaded model
-    y_predict_loaded = xgb_sklearn_model.predict(X_test)
-    print(y_predict_loaded)
+    # # The loaded model contains a stack model of DecisionTree, XgBoost. Load the DecisionTree from the loaded model
+    # # dt = loaded_model['DecisionTree']
+
+    # # Load the decision tree model
+    # dt = DecisionTreeClassifier(random_state = 0)
+    # dt = joblib.load('models/decision_tree_weights.pkl')
+    # dt.load_model('models/decision_tree_weights.pkl')
+
+    # # Load the random forest classifier
+    # rf = RandomForestClassifier(random_state = 0)
+    # rf = joblib.load('models/random_forest_weights.pkl')
+
+    # # Load the extra tree weights
+    # et = ExtraTreesClassifier(random_state = 0)
+    # et = joblib.load('models/extra_tree_weights.pkl')
+
+    # # Load the xgb
+    # xgb_model = xgb.XGBClassifier()
+    # xgb_model = joblib.load('models/xgb_weights.pkl')
+
+    # # dt_train=dt.predict(X_train)
+    # dt_test=dt.predict(X_test)
+    # # rf_train=rf.predict(X_train)
+    # rf_test=rf.predict(X_test)
+    # # et_train=et.predict(X_train)
+    # et_test=et.predict(X_test)
+    # # xgb_train=xgb_model.predict(X_train)
+    # xgb_test=xgb_model.predict(X_test)
+
+    # # Convert the loaded model to a scikit-learn compatible format for predictions
+    # xgb_sklearn_model = xgb.XGBClassifier()
+    # xgb_sklearn_model._Booster = loaded_model
+
+    # # Make predictions with the loaded model
+    # y_predict_loaded = xgb_sklearn_model.predict(X_test)
+    # print(y_predict_loaded)
 
 if __name__ == "__main__":
     app.run()
