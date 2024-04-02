@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 from sqlalchemy import create_engine
 import subprocess
+import tree_based_ids_globecom19
 app = Flask(__name__)
 cors = CORS(app)
 
@@ -115,7 +116,7 @@ def getinfo():
 def run_LCCDE(filename):
     
     # filename = 'CICIDS2017_sample1.csv'
-    # filename = 'CICIDS2017_sample_km1.csv'
+    # filename = 'data/CICIDS2017_sample_km.csv'
     # Read the uploaded CSV file into a DataFrame
     print('FILE READ')
     df = pd.read_csv(filename)
@@ -126,21 +127,21 @@ def run_LCCDE(filename):
     y = df['Label']
 
     # Perform train-test split
-    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.95, test_size=0.05, random_state=0)
+    # X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.95, test_size=0.05, random_state=0)
     m1 = joblib.load('lgb.pkl')
     m2 = xgb.XGBClassifier()
     m2.load_model('xgb_model.model')
     m3 = CatBoostClassifier()
     m3.load_model('catboost.json')
     # Call the LCCDE function with the split data
-    yt, yp = LCCDE(X_test, y_test, m1, m2, m3)
+    yt, yp = LCCDE(X, y, m1, m2, m3)
 
     # Calculate performance metrics
-    accuracy = accuracy_score(yt, yp)
-    precision = precision_score(yt, yp, average='weighted')
-    recall = recall_score(yt, yp, average='weighted')
-    f1_average = f1_score(yt, yp, average='weighted')
-    f1_per_class = f1_score(yt, yp, average=None)
+    # accuracy = accuracy_score(yt, yp)
+    # precision = precision_score(yt, yp, average='weighted')
+    # recall = recall_score(yt, yp, average='weighted')
+    # f1_average = f1_score(yt, yp, average='weighted')
+    # f1_per_class = f1_score(yt, yp, average=None)
 
     predict_dict = {}
     predict_dict["benign"] = 0
@@ -168,14 +169,14 @@ def run_LCCDE(filename):
             predict_dict["webattack"] += 1
     
     # Format the output string
-    output_str = (
-        f"Accuracy of LCCDE: {accuracy}\n"
-        f"Precision of LCCDE: {precision}\n"
-        f"Recall of LCCDE: {recall}\n"
-        f"Average F1 of LCCDE: {f1_average}\n"
-        f"F1 of LCCDE for each type of attack: {f1_per_class}\n"
-        f"Dictionary: {predict_dict}\n"
-    )
+    # output_str = (
+    #     f"Accuracy of LCCDE: {accuracy}\n"
+    #     f"Precision of LCCDE: {precision}\n"
+    #     f"Recall of LCCDE: {recall}\n"
+    #     f"Average F1 of LCCDE: {f1_average}\n"
+    #     f"F1 of LCCDE for each type of attack: {f1_per_class}\n"
+    #     f"Dictionary: {predict_dict}\n"
+    # )
 
     return predict_dict
 
@@ -190,6 +191,8 @@ def LCCDE(X_test, y_test, m1, m2, m3):
     l = []
     pred_l = []
     pro_l = []
+
+    print("Running LCCDE")
 
     # For each class (normal or a type of attack), find the leader model
     for xi, yi in stream.iter_pandas(X_test, y_test):
@@ -260,14 +263,41 @@ def LCCDE(X_test, y_test, m1, m2, m3):
 @app.route('/TreeBased')
 def run_TreeBased():
 
-    def run_python_script(script_path):
-        with open(script_path, 'r') as f:
-            script_code = f.read()
-        exec(script_code)
+    # def run_python_script(script_path):
+    #     with open(script_path, 'r') as f:
+    #         script_code = f.read()
+    #     exec(script_code)
 
-    run_python_script('tree_based_ids_globecom19.py')
+    # run_python_script('tree_based_ids_globecom19.py')
 
-    return "Tree Based IDS has been run successfully!"
+    yp = tree_based_ids_globecom19.main()
+
+    predict_dict = {}
+    predict_dict["benign"] = 0
+    predict_dict["bot"] = 0
+    predict_dict["bruteforce"] = 0
+    predict_dict["dos"] = 0
+    predict_dict["infiltration"] = 0
+    predict_dict["portscan"] = 0
+    predict_dict["webattack"] = 0
+
+    for key, value in yp.items():
+        if key == 0:
+            predict_dict["benign"] = value
+        elif key == 1:
+            predict_dict["bot"] = value
+        elif key == 2:
+            predict_dict["bruteforce"] = value
+        elif key == 3:
+            predict_dict["dos"] = value
+        elif key == 4:
+            predict_dict["infiltration"] = value
+        elif key == 5:
+            predict_dict["portscan"] = value
+        elif key == 6:
+            predict_dict["webattack"] = value
+
+    return predict_dict
     
     # filename = 'CICIDS2017_sample1.csv'
     # df = pd.read_csv(filename)
