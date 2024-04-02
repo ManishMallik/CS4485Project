@@ -256,17 +256,31 @@ def LCCDE(X_test, y_test, m1, m2, m3):
         yp.append(y_pred) # Save the predicted classes for all tested samples
     return yt, yp
 
+@app.route('/TreeBased')
 def run_TreeBased():
+    
+    filename = 'CICIDS2017_sample1.csv'
+    df = pd.read_csv(filename)
+
+    #m3.keys()
+    # Split DataFrame into features (X) and labels (y)
+    X = df.drop(['Label'], axis=1)
+    y = df['Label']
+
+    # Perform train-test split
+    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.95, test_size=0.05, random_state=0)
+    
     # Load the saved model's weights
     loaded_model = xgb.Booster()
-    loaded_model.load_model('stk_model.model')
+    loaded_model.load_model('models/stk_model.model')
 
     # Convert the loaded model to a scikit-learn compatible format for predictions
     xgb_sklearn_model = xgb.XGBClassifier()
     xgb_sklearn_model._Booster = loaded_model
 
     # Make predictions with the loaded model
-    y_predict_loaded = xgb_sklearn_model.predict(x_test)
+    y_predict_loaded = xgb_sklearn_model.predict(X_test)
+    print(y_predict_loaded)
 
 if __name__ == "__main__":
     app.run()
