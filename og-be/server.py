@@ -5,6 +5,7 @@ from flask_cors import CORS, cross_origin
 from sqlalchemy import create_engine
 import subprocess
 import tree_based_ids_globecom19
+import lccde_ids_globecom22
 app = Flask(__name__)
 cors = CORS(app)
 
@@ -110,6 +111,10 @@ def getinfo():
             dict["dataset"] = i[10]
             arr.append(dict)
     return arr
+
+@app.route('/Train_LCCDE')
+def train_LCCDE(filename):
+    yp = lccde_ids_globecom22.main()
 
 # This is just a test
 @app.route('/LCCDE')
