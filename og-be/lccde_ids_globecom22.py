@@ -44,7 +44,339 @@ Due to the large size of this dataset, the sampled subsets of CICIDS2017 is used
 If you want to use this code on other datasets (e.g., CAN-intrusion dataset), just change the dataset name and follow the same steps. The models in this code are generic models that can be used in any intrusion detection/network traffic datasets.
 """
 
-def main():
+# def main():
+
+#     df = pd.read_csv("https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv")
+#     df.Label.value_counts()
+
+#     # df
+#     df.count()
+
+#     print(df.columns)
+
+#     """**Corresponding Attack Types:**  
+#     0 BENIGN &emsp; 18225  
+#     3 DoS        &emsp;   &emsp;   3042  
+#     6 WebAttack    &emsp;      2180  
+#     1 Bot        &emsp;  &emsp;      1966    
+#     5 PortScan  &emsp;       1255  
+#     2 BruteForce  &emsp;      96  
+#     4 Infiltration  &emsp;       36
+
+#     ## Split train set and test set
+#     """
+
+#     X = df.drop(['Label'],axis=1)
+#     y = df['Label']
+#     X_train, X_test, y_train, y_test = train_test_split(X,y, train_size = 0.8, test_size = 0.2, random_state = 0) #shuffle=False
+
+#     """## SMOTE to solve class-imbalance"""
+
+#     pd.Series(y_train).value_counts()
+
+#     smote=SMOTE(n_jobs=-1,sampling_strategy={2:1000,4:1000})
+
+#     X_train, y_train = smote.fit_resample(X_train, y_train)
+
+#     pd.Series(y_train).value_counts()
+
+#     """## Machine Learning (ML) model training
+#     ### Training three base learners: LightGBM, XGBoost, CatBoost
+#     """
+
+#     # Commented out IPython magic to ensure Python compatibility.
+#     # %%time
+#     # Train the LightGBM algorithm
+#     # import lightgbm as lgb
+#     lg = lgb.LGBMClassifier()
+#     lg.fit(X_train, y_train)
+#     y_pred = lg.predict(X_test)
+#     print(classification_report(y_test,y_pred))
+#     print("Accuracy of LightGBM: "+ str(accuracy_score(y_test, y_pred)))
+#     print("Precision of LightGBM: "+ str(precision_score(y_test, y_pred, average='weighted')))
+#     print("Recall of LightGBM: "+ str(recall_score(y_test, y_pred, average='weighted')))
+#     print("Average F1 of LightGBM: "+ str(f1_score(y_test, y_pred, average='weighted')))
+#     print("F1 of LightGBM for each type of attack: "+ str(f1_score(y_test, y_pred, average=None)))
+#     lg_f1=f1_score(y_test, y_pred, average=None)
+    
+#     # Plot the confusion matrix
+#     cm=confusion_matrix(y_test,y_pred)
+#     f,ax=plt.subplots(figsize=(5,5))
+#     sns.heatmap(cm,annot=True,linewidth=0.5,linecolor="red",fmt=".0f",ax=ax)
+#     plt.xlabel("y_pred")
+#     plt.ylabel("y_true")
+#     #plt.show()
+
+#     # Commented out IPython magic to ensure Python compatibility.
+#     # %%time
+#     # # Train the XGBoost algorithm
+#     # import xgboost as xgb
+#     xg = xgb.XGBClassifier()
+    
+#     X_train_x = X_train.values
+#     X_test_x = X_test.values
+    
+#     xg.fit(X_train_x, y_train)
+    
+#     y_pred = xg.predict(X_test_x)
+#     print(classification_report(y_test,y_pred))
+#     print("Accuracy of XGBoost: "+ str(accuracy_score(y_test, y_pred)))
+#     print("Precision of XGBoost: "+ str(precision_score(y_test, y_pred, average='weighted')))
+#     print("Recall of XGBoost: "+ str(recall_score(y_test, y_pred, average='weighted')))
+#     print("Average F1 of XGBoost: "+ str(f1_score(y_test, y_pred, average='weighted')))
+#     print("F1 of XGBoost for each type of attack: "+ str(f1_score(y_test, y_pred, average=None)))
+#     xg_f1=f1_score(y_test, y_pred, average=None)
+    
+#     # Plot the confusion matrix
+#     cm=confusion_matrix(y_test,y_pred)
+#     f,ax=plt.subplots(figsize=(5,5))
+#     sns.heatmap(cm,annot=True,linewidth=0.5,linecolor="red",fmt=".0f",ax=ax)
+#     plt.xlabel("y_pred")
+#     plt.ylabel("y_true")
+#     #plt.show()
+
+#     # Commented out IPython magic to ensure Python compatibility.
+#     # %%time
+#     # Train the CatBoost algorithm
+#     # import catboost as cbt
+#     print("Initializing catboost")
+#     cb = cbt.CatBoostClassifier(verbose=0,boosting_type='Plain')
+#     #cb = cbt.CatBoostClassifier()
+    
+#     print("Training catboost")
+#     cb.fit(X_train, y_train)
+
+#     print("Testing catboost")
+#     y_pred = cb.predict(X_test)
+#     print(classification_report(y_test,y_pred))
+#     print("Accuracy of CatBoost: "+ str(accuracy_score(y_test, y_pred)))
+#     print("Precision of CatBoost: "+ str(precision_score(y_test, y_pred, average='weighted')))
+#     print("Recall of CatBoost: "+ str(recall_score(y_test, y_pred, average='weighted')))
+#     print("Average F1 of CatBoost: "+ str(f1_score(y_test, y_pred, average='weighted')))
+#     print("F1 of CatBoost for each type of attack: "+ str(f1_score(y_test, y_pred, average=None)))
+#     cb_f1=f1_score(y_test, y_pred, average=None)
+    
+#     # Plot the confusion matrix
+#     cm=confusion_matrix(y_test,y_pred)
+#     f,ax=plt.subplots(figsize=(5,5))
+#     sns.heatmap(cm,annot=True,linewidth=0.5,linecolor="red",fmt=".0f",ax=ax)
+#     plt.xlabel("y_pred")
+#     plt.ylabel("y_true")
+#     #plt.show()
+
+#     """## Proposed ensemble model: Leader Class and Confidence Decision Ensemble (LCCDE)
+
+#     LCCDE aims to achieve optimal model performance by identifying the best-performing base ML model with the highest prediction confidence for each class.
+
+#     ### Find the best-performing (leading) model for each type of attack among the three ML models
+#     """
+
+#     # Leading model list for each class
+#     # model=[]
+#     # for i in range(len(lg_f1)):
+#     #     if max(lg_f1[i],xg_f1[i],cb_f1[i]) == lg_f1[i]:
+#     #         model.append(lg)
+#     #     elif max(lg_f1[i],xg_f1[i],cb_f1[i]) == xg_f1[i]:
+#     #         model.append(xg)
+#     #     else:
+#     #         model.append(cb)
+
+#     # import pickle
+
+#     # # Save the model list
+#     # with open('/content/model_list.pkl', 'wb') as f:
+#     #     pickle.dump(model, f)
+
+
+
+#     # model
+
+#     # """**Leading Model for Each Type of Attack:**  
+#     # 0 BENIGN: &emsp; XGBClassifier  
+#     # 1 Bot:        &emsp;  &emsp;      XGBClassifier   
+#     # 2 BruteForce:  &emsp;      LGBMClassifier  
+#     # 3 DoS:        &emsp;   &emsp;   XGBClassifier  
+#     # 4 Infiltration:  &emsp;       LGBMClassifier  
+#     # 5 PortScan:  &emsp;       LGBMClassifier  
+#     # 6 WebAttack:    &emsp;      XGBClassifier
+
+#     # ## LCCDE Prediction
+#     # """
+
+#     # def LCCDE(X_test, y_test, m1, m2, m3):
+#     #     i = 0
+#     #     t = []
+#     #     m = []
+#     #     yt = []
+#     #     yp = []
+#     #     l = []
+#     #     pred_l = []
+#     #     pro_l = []
+
+#     #     # For each class (normal or a type of attack), find the leader model
+#     #     for xi, yi in stream.iter_pandas(X_test, y_test):
+
+#     #         xi2=np.array(list(xi.values()))
+#     #         y_pred1 = m1.predict(xi2.reshape(1, -1))      # model 1 (LightGBM) makes a prediction on text sample xi
+#     #         y_pred1 = int(y_pred1[0])
+#     #         y_pred2 = m2.predict(xi2.reshape(1, -1))      # model 2 (XGBoost) makes a prediction on text sample xi
+#     #         y_pred2 = int(y_pred2[0])
+#     #         y_pred3 = m3.predict(xi2.reshape(1, -1))      # model 3 (Catboost) makes a prediction on text sample xi
+#     #         y_pred3 = int(y_pred3[0])
+
+#     #         p1 = m1.predict_proba(xi2.reshape(1, -1))     # The prediction probability (confidence) list of model 1
+#     #         p2 = m2.predict_proba(xi2.reshape(1, -1))     # The prediction probability (confidence) list of model 2
+#     #         p3 = m3.predict_proba(xi2.reshape(1, -1))     # The prediction probability (confidence) list of model 3
+
+#     #         # Find the highest prediction probability among all classes for each ML model
+#     #         y_pred_p1 = np.max(p1)
+#     #         y_pred_p2 = np.max(p2)
+#     #         y_pred_p3 = np.max(p3)
+
+#     #         if y_pred1 == y_pred2 == y_pred3: # If the predicted classes of all the three models are the same
+#     #             y_pred = y_pred1 # Use this predicted class as the final predicted class
+
+#     #         elif y_pred1 != y_pred2 != y_pred3: # If the predicted classes of all the three models are different
+#     #             # For each prediction model, check if the predicted class’s original ML model is the same as its leader model
+#     #             if model[y_pred1]==m1: # If they are the same and the leading model is model 1 (LightGBM)
+#     #                 l.append(m1)
+#     #                 pred_l.append(y_pred1) # Save the predicted class
+#     #                 pro_l.append(y_pred_p1) # Save the confidence
+
+#     #             if model[y_pred2]==m2: # If they are the same and the leading model is model 2 (XGBoost)
+#     #                 l.append(m2)
+#     #                 pred_l.append(y_pred2)
+#     #                 pro_l.append(y_pred_p2)
+
+#     #             if model[y_pred3]==m3: # If they are the same and the leading model is model 3 (CatBoost)
+#     #                 l.append(m3)
+#     #                 pred_l.append(y_pred3)
+#     #                 pro_l.append(y_pred_p3)
+
+#     #             if len(l)==0: # Avoid empty probability list
+#     #                 pro_l=[y_pred_p1,y_pred_p2,y_pred_p3]
+
+#     #             elif len(l)==1: # If only one pair of the original model and the leader model for each predicted class is the same
+#     #                 y_pred=pred_l[0] # Use the predicted class of the leader model as the final prediction class
+
+#     #             else: # If no pair or multiple pairs of the original prediction model and the leader model for each predicted class are the same
+#     #                 max_p = max(pro_l) # Find the highest confidence
+
+#     #                 # Use the predicted class with the highest confidence as the final prediction class
+#     #                 if max_p == y_pred_p1:
+#     #                     y_pred = y_pred1
+#     #                 elif max_p == y_pred_p2:
+#     #                     y_pred = y_pred2
+#     #                 else:
+#     #                     y_pred = y_pred3
+
+#     #         else: # If two predicted classes are the same and the other one is different
+#     #             n = mode([y_pred1,y_pred2,y_pred3]) # Find the predicted class with the majority vote
+#     #             y_pred = model[n].predict(xi2.reshape(1, -1)) # Use the predicted class of the leader model as the final prediction class
+#     #             y_pred = int(y_pred[0])
+
+#     #         yt.append(yi)
+#     #         yp.append(y_pred) # Save the predicted classes for all tested samples
+#     #     return yt, yp
+
+#     # # Commented out IPython magic to ensure Python compatibility.
+#     # # %%time
+#     # # # Implementing LCCDE
+#     # # yt, yp = LCCDE(X_test, y_test, m1 = lg, m2 = xg, m3 = cb)
+
+#     # print("Predicted Labels:")
+#     # for label in yp:
+#     #     print(label)
+
+#     # # The performance of the proposed lCCDE model
+#     # print("Accuracy of LCCDE: "+ str(accuracy_score(yt, yp)))
+#     # print("Precision of LCCDE: "+ str(precision_score(yt, yp, average='weighted')))
+#     # print("Recall of LCCDE: "+ str(recall_score(yt, yp, average='weighted')))
+#     # print("Average F1 of LCCDE: "+ str(f1_score(yt, yp, average='weighted')))
+#     # print("F1 of LCCDE for each type of attack: "+ str(f1_score(yt, yp, average=None)))
+
+#     # # Comparison: The F1-scores for each base model
+#     # print("F1 of LightGBM for each type of attack: "+ str(lg_f1))
+#     # print("F1 of XGBoost for each type of attack: "+ str(xg_f1))
+#     # print("F1 of CatBoost for each type of attack: "+ str(cb_f1))
+
+#     # # Comparison: The F1-scores for each base model
+#     # print("F1 of LightGBM for each type of attack: "+ str(lg_f1))
+#     # print("F1 of XGBoost for each type of attack: "+ str(xg_f1))
+#     # print("F1 of CatBoost for each type of attack: "+ str(cb_f1))
+
+#     # xg.save_model('xgb_model.model')
+
+#     # xg_load = xgb.XGBClassifier()
+#     # xg_load.load_model('/content/xgb_model.model')
+
+#     # import tempfile
+
+#     # import joblib
+#     # # save model
+#     # joblib.dump(lg, 'lgb.pkl')
+
+#     # # load model
+#     # lg_load = joblib.load('/content/lgb.pkl')
+
+#     # cb.save_model('catboost.json')
+
+#     # from catboost import CatBoostClassifier
+
+#     # cb_load = CatBoostClassifier()
+#     # cb_load.load_model('/content/catboost.json')
+
+#     # from io import StringIO
+
+#     # # DO NOT USE
+#     # '''
+#     # # Create a Gradio interface
+#     # def lccde_interface(file):
+#     #     # Read the uploaded CSV file into a DataFrame
+
+#     # # df = pd.read_csv('https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv')
+
+#     #     #m3.keys()
+#     #     # Split DataFrame into features (X) and labels (y)
+#     #     X = df.drop(['Label'], axis=1)
+#     #     y = df['Label']
+
+#     #     # Perform train-test split
+#     #     X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.95, test_size=0.05, random_state=0)
+
+#     #     # Call the LCCDE function with the split data
+#     #     yt, yp = LCCDE(X_test, y_test, m1, m2, m3)
+
+#     #     # Calculate performance metrics
+#     #     accuracy = accuracy_score(yt, yp)
+#     #     precision = precision_score(yt, yp, average='weighted')
+#     #     recall = recall_score(yt, yp, average='weighted')
+#     #     f1_average = f1_score(yt, yp, average='weighted')
+#     #     f1_per_class = f1_score(yt, yp, average=None)
+
+#     #     # Format the output string
+#     #     output_str = (
+#     #         f"Accuracy of LCCDE: {accuracy}\n"
+#     #         f"Precision of LCCDE: {precision}\n"
+#     #         f"Recall of LCCDE: {recall}\n"
+#     #         f"Average F1 of LCCDE: {f1_average}\n"
+#     #         f"F1 of LCCDE for each type of attack: {f1_per_class}"
+#     #     )
+
+#     #     return output_str
+#     # '''
+
+#     # """**Conclusion**: The performance (F1-score) of the proposed LCCDE ensemble model on each type of attack detection is higher than any base ML model."""
+
+# if __name__ == "__main__":
+#     main()
+
+def main(lgb_boosting_type='gbdt', lgb_num_leaves=31, lgb_learning_rate=0.1, lgb_n_estimators=100, lgb_max_depth=-1, 
+         lgb_min_child_samples=20, lgb_subsample=1.0, lgb_colsample_bytree=1.0, lgb_reg_alpha=0.0, lgb_reg_lambda=0.0,
+         xgb_booster='gbtree', xgb_eta=0.3, xgb_gamma=0, xgb_num_boost_round=10, xgb_max_depth=6, xgb_subsample=1.0,
+         xgb_colsample_bytree=1.0, xgb_reg_lambda=1.0, xgb_reg_alpha=0.0, xgb_min_child_weight=1, xgb_objective='binary:logistic',
+         cb_iterations=100, cb_learning_rate=0.03, cb_depth=6, cb_l2_leaf_reg=3, cb_colsample_bylevel=1.0, cb_border_count=254,
+         cb_random_strength=1.0, cb_bootstrap_type='Bayesian', cb_early_stopping_rounds=None, cb_subsample=1.0):
 
     df = pd.read_csv("https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv")
     df.Label.value_counts()
@@ -54,17 +386,7 @@ def main():
 
     print(df.columns)
 
-    """**Corresponding Attack Types:**  
-    0 BENIGN &emsp; 18225  
-    3 DoS        &emsp;   &emsp;   3042  
-    6 WebAttack    &emsp;      2180  
-    1 Bot        &emsp;  &emsp;      1966    
-    5 PortScan  &emsp;       1255  
-    2 BruteForce  &emsp;      96  
-    4 Infiltration  &emsp;       36
-
-    ## Split train set and test set
-    """
+    """## Split train set and test set"""
 
     X = df.drop(['Label'],axis=1)
     y = df['Label']
@@ -84,11 +406,11 @@ def main():
     ### Training three base learners: LightGBM, XGBoost, CatBoost
     """
 
-    # Commented out IPython magic to ensure Python compatibility.
-    # %%time
     # Train the LightGBM algorithm
-    # import lightgbm as lgb
-    lg = lgb.LGBMClassifier()
+    lg = lgb.LGBMClassifier(boosting_type=lgb_boosting_type, num_leaves=lgb_num_leaves, learning_rate=lgb_learning_rate,
+                            n_estimators=lgb_n_estimators, max_depth=lgb_max_depth, min_child_samples=lgb_min_child_samples,
+                            subsample=lgb_subsample, colsample_bytree=lgb_colsample_bytree, reg_alpha=lgb_reg_alpha,
+                            reg_lambda=lgb_reg_lambda)
     lg.fit(X_train, y_train)
     y_pred = lg.predict(X_test)
     print(classification_report(y_test,y_pred))
@@ -107,11 +429,11 @@ def main():
     plt.ylabel("y_true")
     #plt.show()
 
-    # Commented out IPython magic to ensure Python compatibility.
-    # %%time
-    # # Train the XGBoost algorithm
-    # import xgboost as xgb
-    xg = xgb.XGBClassifier()
+    # Train the XGBoost algorithm
+    xg = xgb.XGBClassifier(booster=xgb_booster, eta=xgb_eta, gamma=xgb_gamma, num_boost_round=xgb_num_boost_round,
+                            max_depth=xgb_max_depth, subsample=xgb_subsample, colsample_bytree=xgb_colsample_bytree,
+                            reg_lambda=xgb_reg_lambda, reg_alpha=xgb_reg_alpha, min_child_weight=xgb_min_child_weight,
+                            objective=xgb_objective)
     
     X_train_x = X_train.values
     X_test_x = X_test.values
@@ -135,14 +457,13 @@ def main():
     plt.ylabel("y_true")
     #plt.show()
 
-    # Commented out IPython magic to ensure Python compatibility.
-    # %%time
     # Train the CatBoost algorithm
-    # import catboost as cbt
     print("Initializing catboost")
-    cb = cbt.CatBoostClassifier(verbose=0,boosting_type='Plain')
-    #cb = cbt.CatBoostClassifier()
-    
+    cb = cbt.CatBoostClassifier(iterations=cb_iterations, learning_rate=cb_learning_rate, depth=cb_depth,
+                                l2_leaf_reg=cb_l2_leaf_reg, colsample_bylevel=cb_colsample_bylevel, border_count=cb_border_count,
+                                random_strength=cb_random_strength, bootstrap_type=cb_bootstrap_type,
+                                early_stopping_rounds=cb_early_stopping_rounds, verbose=0, boosting_type='Plain'#, subsample=cb_subsample,
+                                )
     print("Training catboost")
     cb.fit(X_train, y_train)
 
@@ -163,210 +484,6 @@ def main():
     plt.xlabel("y_pred")
     plt.ylabel("y_true")
     #plt.show()
-
-    """## Proposed ensemble model: Leader Class and Confidence Decision Ensemble (LCCDE)
-
-    LCCDE aims to achieve optimal model performance by identifying the best-performing base ML model with the highest prediction confidence for each class.
-
-    ### Find the best-performing (leading) model for each type of attack among the three ML models
-    """
-
-    # Leading model list for each class
-    # model=[]
-    # for i in range(len(lg_f1)):
-    #     if max(lg_f1[i],xg_f1[i],cb_f1[i]) == lg_f1[i]:
-    #         model.append(lg)
-    #     elif max(lg_f1[i],xg_f1[i],cb_f1[i]) == xg_f1[i]:
-    #         model.append(xg)
-    #     else:
-    #         model.append(cb)
-
-    # import pickle
-
-    # # Save the model list
-    # with open('/content/model_list.pkl', 'wb') as f:
-    #     pickle.dump(model, f)
-
-
-
-    # model
-
-    # """**Leading Model for Each Type of Attack:**  
-    # 0 BENIGN: &emsp; XGBClassifier  
-    # 1 Bot:        &emsp;  &emsp;      XGBClassifier   
-    # 2 BruteForce:  &emsp;      LGBMClassifier  
-    # 3 DoS:        &emsp;   &emsp;   XGBClassifier  
-    # 4 Infiltration:  &emsp;       LGBMClassifier  
-    # 5 PortScan:  &emsp;       LGBMClassifier  
-    # 6 WebAttack:    &emsp;      XGBClassifier
-
-    # ## LCCDE Prediction
-    # """
-
-    # def LCCDE(X_test, y_test, m1, m2, m3):
-    #     i = 0
-    #     t = []
-    #     m = []
-    #     yt = []
-    #     yp = []
-    #     l = []
-    #     pred_l = []
-    #     pro_l = []
-
-    #     # For each class (normal or a type of attack), find the leader model
-    #     for xi, yi in stream.iter_pandas(X_test, y_test):
-
-    #         xi2=np.array(list(xi.values()))
-    #         y_pred1 = m1.predict(xi2.reshape(1, -1))      # model 1 (LightGBM) makes a prediction on text sample xi
-    #         y_pred1 = int(y_pred1[0])
-    #         y_pred2 = m2.predict(xi2.reshape(1, -1))      # model 2 (XGBoost) makes a prediction on text sample xi
-    #         y_pred2 = int(y_pred2[0])
-    #         y_pred3 = m3.predict(xi2.reshape(1, -1))      # model 3 (Catboost) makes a prediction on text sample xi
-    #         y_pred3 = int(y_pred3[0])
-
-    #         p1 = m1.predict_proba(xi2.reshape(1, -1))     # The prediction probability (confidence) list of model 1
-    #         p2 = m2.predict_proba(xi2.reshape(1, -1))     # The prediction probability (confidence) list of model 2
-    #         p3 = m3.predict_proba(xi2.reshape(1, -1))     # The prediction probability (confidence) list of model 3
-
-    #         # Find the highest prediction probability among all classes for each ML model
-    #         y_pred_p1 = np.max(p1)
-    #         y_pred_p2 = np.max(p2)
-    #         y_pred_p3 = np.max(p3)
-
-    #         if y_pred1 == y_pred2 == y_pred3: # If the predicted classes of all the three models are the same
-    #             y_pred = y_pred1 # Use this predicted class as the final predicted class
-
-    #         elif y_pred1 != y_pred2 != y_pred3: # If the predicted classes of all the three models are different
-    #             # For each prediction model, check if the predicted class’s original ML model is the same as its leader model
-    #             if model[y_pred1]==m1: # If they are the same and the leading model is model 1 (LightGBM)
-    #                 l.append(m1)
-    #                 pred_l.append(y_pred1) # Save the predicted class
-    #                 pro_l.append(y_pred_p1) # Save the confidence
-
-    #             if model[y_pred2]==m2: # If they are the same and the leading model is model 2 (XGBoost)
-    #                 l.append(m2)
-    #                 pred_l.append(y_pred2)
-    #                 pro_l.append(y_pred_p2)
-
-    #             if model[y_pred3]==m3: # If they are the same and the leading model is model 3 (CatBoost)
-    #                 l.append(m3)
-    #                 pred_l.append(y_pred3)
-    #                 pro_l.append(y_pred_p3)
-
-    #             if len(l)==0: # Avoid empty probability list
-    #                 pro_l=[y_pred_p1,y_pred_p2,y_pred_p3]
-
-    #             elif len(l)==1: # If only one pair of the original model and the leader model for each predicted class is the same
-    #                 y_pred=pred_l[0] # Use the predicted class of the leader model as the final prediction class
-
-    #             else: # If no pair or multiple pairs of the original prediction model and the leader model for each predicted class are the same
-    #                 max_p = max(pro_l) # Find the highest confidence
-
-    #                 # Use the predicted class with the highest confidence as the final prediction class
-    #                 if max_p == y_pred_p1:
-    #                     y_pred = y_pred1
-    #                 elif max_p == y_pred_p2:
-    #                     y_pred = y_pred2
-    #                 else:
-    #                     y_pred = y_pred3
-
-    #         else: # If two predicted classes are the same and the other one is different
-    #             n = mode([y_pred1,y_pred2,y_pred3]) # Find the predicted class with the majority vote
-    #             y_pred = model[n].predict(xi2.reshape(1, -1)) # Use the predicted class of the leader model as the final prediction class
-    #             y_pred = int(y_pred[0])
-
-    #         yt.append(yi)
-    #         yp.append(y_pred) # Save the predicted classes for all tested samples
-    #     return yt, yp
-
-    # # Commented out IPython magic to ensure Python compatibility.
-    # # %%time
-    # # # Implementing LCCDE
-    # # yt, yp = LCCDE(X_test, y_test, m1 = lg, m2 = xg, m3 = cb)
-
-    # print("Predicted Labels:")
-    # for label in yp:
-    #     print(label)
-
-    # # The performance of the proposed lCCDE model
-    # print("Accuracy of LCCDE: "+ str(accuracy_score(yt, yp)))
-    # print("Precision of LCCDE: "+ str(precision_score(yt, yp, average='weighted')))
-    # print("Recall of LCCDE: "+ str(recall_score(yt, yp, average='weighted')))
-    # print("Average F1 of LCCDE: "+ str(f1_score(yt, yp, average='weighted')))
-    # print("F1 of LCCDE for each type of attack: "+ str(f1_score(yt, yp, average=None)))
-
-    # # Comparison: The F1-scores for each base model
-    # print("F1 of LightGBM for each type of attack: "+ str(lg_f1))
-    # print("F1 of XGBoost for each type of attack: "+ str(xg_f1))
-    # print("F1 of CatBoost for each type of attack: "+ str(cb_f1))
-
-    # # Comparison: The F1-scores for each base model
-    # print("F1 of LightGBM for each type of attack: "+ str(lg_f1))
-    # print("F1 of XGBoost for each type of attack: "+ str(xg_f1))
-    # print("F1 of CatBoost for each type of attack: "+ str(cb_f1))
-
-    # xg.save_model('xgb_model.model')
-
-    # xg_load = xgb.XGBClassifier()
-    # xg_load.load_model('/content/xgb_model.model')
-
-    # import tempfile
-
-    # import joblib
-    # # save model
-    # joblib.dump(lg, 'lgb.pkl')
-
-    # # load model
-    # lg_load = joblib.load('/content/lgb.pkl')
-
-    # cb.save_model('catboost.json')
-
-    # from catboost import CatBoostClassifier
-
-    # cb_load = CatBoostClassifier()
-    # cb_load.load_model('/content/catboost.json')
-
-    # from io import StringIO
-
-    # # DO NOT USE
-    # '''
-    # # Create a Gradio interface
-    # def lccde_interface(file):
-    #     # Read the uploaded CSV file into a DataFrame
-
-    # # df = pd.read_csv('https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv')
-
-    #     #m3.keys()
-    #     # Split DataFrame into features (X) and labels (y)
-    #     X = df.drop(['Label'], axis=1)
-    #     y = df['Label']
-
-    #     # Perform train-test split
-    #     X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.95, test_size=0.05, random_state=0)
-
-    #     # Call the LCCDE function with the split data
-    #     yt, yp = LCCDE(X_test, y_test, m1, m2, m3)
-
-    #     # Calculate performance metrics
-    #     accuracy = accuracy_score(yt, yp)
-    #     precision = precision_score(yt, yp, average='weighted')
-    #     recall = recall_score(yt, yp, average='weighted')
-    #     f1_average = f1_score(yt, yp, average='weighted')
-    #     f1_per_class = f1_score(yt, yp, average=None)
-
-    #     # Format the output string
-    #     output_str = (
-    #         f"Accuracy of LCCDE: {accuracy}\n"
-    #         f"Precision of LCCDE: {precision}\n"
-    #         f"Recall of LCCDE: {recall}\n"
-    #         f"Average F1 of LCCDE: {f1_average}\n"
-    #         f"F1 of LCCDE for each type of attack: {f1_per_class}"
-    #     )
-
-    #     return output_str
-    # '''
-
-    # """**Conclusion**: The performance (F1-score) of the proposed LCCDE ensemble model on each type of attack detection is higher than any base ML model."""
 
 if __name__ == "__main__":
     main()
