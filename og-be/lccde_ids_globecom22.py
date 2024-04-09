@@ -371,13 +371,15 @@ If you want to use this code on other datasets (e.g., CAN-intrusion dataset), ju
 # if __name__ == "__main__":
 #     main()
 
-def main(lgb_num_leaves=31, lgb_learning_rate=0.1, lgb_n_estimators=100, lgb_max_depth=-1, 
+def main(filename = "https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv",
+        lgb_num_leaves=31, lgb_learning_rate=0.1, lgb_n_estimators=100, lgb_max_depth=-1, 
          lgb_min_child_samples=20, lgb_colsample_bytree=1.0, lgb_reg_alpha=0.0, lgb_reg_lambda=0.0,
          xgb_eta=0.3, xgb_num_boost_round=10, xgb_max_depth=6,
          xgb_colsample_bytree=1.0, xgb_reg_lambda=1.0, xgb_reg_alpha=0.0,
          cb_iterations=100, cb_learning_rate=0.03, cb_depth=6, cb_l2_leaf_reg=3, cb_colsample_bylevel=1.0, cb_border_count=254,
          cb_random_strength=1.0, cb_bootstrap_type='Bayesian'):
 
+    # df = pd.read_csv("https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv")
     df = pd.read_csv("https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv")
     df.Label.value_counts()
 

@@ -63,9 +63,9 @@ def sendinfo():
     output = run_model(model_type, dataset)
 
     # step 3: save the output to the sql database
-    f = open("/Users/alekhyaadonthireddy/Documents/CS 4485/CS4485Project/og-be/.secrets", "r")
+    f = open("/home/ash/Projects/CS4485Project/og-be/.secrets", "r")
     secret = f.read().strip()
-    engine = create_engine(f"mysql+pymysql://{secret}@72.182.161.176/IDS")
+    engine = create_engine(f"mysql+pymysql://{secret}@72.182.162.132/IDS")
     dict = {}
 
     with engine.connect() as conn:
@@ -91,9 +91,9 @@ def sendinfo():
 @app.route("/getinfo")
 # For past results to query all the previous results
 def getinfo():
-    f = open("/Users/alekhyaadonthireddy/Documents/CS 4485/CS4485Project/og-be/.secrets", "r")
+    f = open("/home/ash/Projects/CS4485Project/og-be/.secrets", "r")
     secret = f.read().strip()
-    engine = create_engine(f"mysql+pymysql://{secret}@72.182.161.176/IDS")
+    engine = create_engine(f"mysql+pymysql://{secret}@72.182.162.132/IDS")
     arr = []
     with engine.connect() as conn:
         for i in conn.execute(text("SELECT * FROM Results")).fetchall():
@@ -114,7 +114,9 @@ def getinfo():
 
 @app.route('/Train_LCCDE')
 def train_LCCDE(filename):
-    yp = lccde_ids_globecom22.main()
+    if filename == "":
+        filename = "https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv"
+    yp = lccde_ids_globecom22.main(filename)
 
 # This is just a test
 @app.route('/LCCDE')
