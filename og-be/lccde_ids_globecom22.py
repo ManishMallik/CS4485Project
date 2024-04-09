@@ -371,12 +371,12 @@ If you want to use this code on other datasets (e.g., CAN-intrusion dataset), ju
 # if __name__ == "__main__":
 #     main()
 
-def main(lgb_boosting_type='gbdt', lgb_num_leaves=31, lgb_learning_rate=0.1, lgb_n_estimators=100, lgb_max_depth=-1, 
-         lgb_min_child_samples=20, lgb_subsample=1.0, lgb_colsample_bytree=1.0, lgb_reg_alpha=0.0, lgb_reg_lambda=0.0,
-         xgb_booster='gbtree', xgb_eta=0.3, xgb_gamma=0, xgb_num_boost_round=10, xgb_max_depth=6, xgb_subsample=1.0,
-         xgb_colsample_bytree=1.0, xgb_reg_lambda=1.0, xgb_reg_alpha=0.0, xgb_min_child_weight=1, xgb_objective='binary:logistic',
+def main(lgb_num_leaves=31, lgb_learning_rate=0.1, lgb_n_estimators=100, lgb_max_depth=-1, 
+         lgb_min_child_samples=20, lgb_colsample_bytree=1.0, lgb_reg_alpha=0.0, lgb_reg_lambda=0.0,
+         xgb_eta=0.3, xgb_num_boost_round=10, xgb_max_depth=6,
+         xgb_colsample_bytree=1.0, xgb_reg_lambda=1.0, xgb_reg_alpha=0.0,
          cb_iterations=100, cb_learning_rate=0.03, cb_depth=6, cb_l2_leaf_reg=3, cb_colsample_bylevel=1.0, cb_border_count=254,
-         cb_random_strength=1.0, cb_bootstrap_type='Bayesian', cb_early_stopping_rounds=None, cb_subsample=1.0):
+         cb_random_strength=1.0, cb_bootstrap_type='Bayesian'):
 
     df = pd.read_csv("https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv")
     df.Label.value_counts()
@@ -407,9 +407,9 @@ def main(lgb_boosting_type='gbdt', lgb_num_leaves=31, lgb_learning_rate=0.1, lgb
     """
 
     # Train the LightGBM algorithm
-    lg = lgb.LGBMClassifier(boosting_type=lgb_boosting_type, num_leaves=lgb_num_leaves, learning_rate=lgb_learning_rate,
+    lg = lgb.LGBMClassifier(num_leaves=lgb_num_leaves, learning_rate=lgb_learning_rate,
                             n_estimators=lgb_n_estimators, max_depth=lgb_max_depth, min_child_samples=lgb_min_child_samples,
-                            subsample=lgb_subsample, colsample_bytree=lgb_colsample_bytree, reg_alpha=lgb_reg_alpha,
+                            colsample_bytree=lgb_colsample_bytree, reg_alpha=lgb_reg_alpha,
                             reg_lambda=lgb_reg_lambda)
     lg.fit(X_train, y_train)
     y_pred = lg.predict(X_test)
@@ -430,10 +430,9 @@ def main(lgb_boosting_type='gbdt', lgb_num_leaves=31, lgb_learning_rate=0.1, lgb
     #plt.show()
 
     # Train the XGBoost algorithm
-    xg = xgb.XGBClassifier(booster=xgb_booster, eta=xgb_eta, gamma=xgb_gamma, num_boost_round=xgb_num_boost_round,
-                            max_depth=xgb_max_depth, subsample=xgb_subsample, colsample_bytree=xgb_colsample_bytree,
-                            reg_lambda=xgb_reg_lambda, reg_alpha=xgb_reg_alpha, min_child_weight=xgb_min_child_weight,
-                            objective=xgb_objective)
+    xg = xgb.XGBClassifier(eta=xgb_eta, num_boost_round=xgb_num_boost_round,
+                            max_depth=xgb_max_depth, colsample_bytree=xgb_colsample_bytree,
+                            reg_lambda=xgb_reg_lambda, reg_alpha=xgb_reg_alpha)
     
     X_train_x = X_train.values
     X_test_x = X_test.values
@@ -462,7 +461,6 @@ def main(lgb_boosting_type='gbdt', lgb_num_leaves=31, lgb_learning_rate=0.1, lgb
     cb = cbt.CatBoostClassifier(iterations=cb_iterations, learning_rate=cb_learning_rate, depth=cb_depth,
                                 l2_leaf_reg=cb_l2_leaf_reg, colsample_bylevel=cb_colsample_bylevel, border_count=cb_border_count,
                                 random_strength=cb_random_strength, bootstrap_type=cb_bootstrap_type,
-                                early_stopping_rounds=cb_early_stopping_rounds, verbose=0, boosting_type='Plain'#, subsample=cb_subsample,
                                 )
     print("Training catboost")
     cb.fit(X_train, y_train)
