@@ -13,6 +13,7 @@ function App() {
   const [result, setResult] = useState({"benign":0,"bot":0,"bruteforce":0,"dataset":0,"dos":0,"id":0,"infiltration":0,"model":0,"portscan":0,"time":"NULL","webattack":0})
   const [presult, setPresult] = useState({})
   const [showParamsPopup, setShowParamsPopup] = useState(false);
+  const [loaded, setLoaded] = useState(true)
 
   const [compareResultsVisible, setCompareResultsVisible] = useState(false);
   const [comparedResult1, setComparedResult1] = useState({});
@@ -32,6 +33,10 @@ function App() {
   useEffect(()=>{
     setPresult(result)
   }, [result])
+  useEffect(()=>{
+    console.log(loaded)
+  }, [loaded])
+
 
 
   const handleModelSelect = (model) => {
@@ -65,10 +70,12 @@ function App() {
     // Implement logic to run the selected algorithm
     // and update pastResults state
     if(selectedModel != null && selectedData != null){
-      fetch(`http://127.0.0.1:5000/sendinfo?model_type=${selectedModel}&dataset=${selectedData}`)
+      setLoaded(false)
+      fetch(`http://localhost:5000/sendinfo?model_type=${selectedModel}&dataset=${selectedData}`)
       .then((response)=>response.json())
       .then((data) =>{
         setResult(data)
+        setLoaded(true)
       })
       setSelectedModel(null);
       setSelectedData(null);
@@ -225,7 +232,12 @@ function App() {
           >CICIDS2017_sample_km.csv
           </button>
         </div>
-        <button /*loading*/ variant="outlined" className="runButton button" onClick={handleRunAlgorithm} >{<loading-bounce size="40"></loading-bounce>}</button>
+        {
+          loaded ? 
+          <button /*done loading*/ variant="outlined" className="runButton button" onClick={handleRunAlgorithm}>Run</button> :
+          <button /*loading*/ variant="outlined" className="runButton button" >{<loading-bounce size="40"></loading-bounce>}</button>
+
+        }
       </div>
       <div className="bottom-left section">
         <h2>Past Results</h2>
