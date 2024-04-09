@@ -109,7 +109,7 @@
   width: 45%;
 }
 
-.model-buttons {
+.model-buttons{
   display: flex;
   flex-direction: row;
   height: 50%;
@@ -244,4 +244,92 @@ button:hover {
 
 .LoadingButton {
   background-color: #77ACA2;
+}
+
+/* Style for the tweak parameters button */
+/* .tweak-params-button {
+  margin-top: 10px;
+  padding: 8px 16px;
+  background-color: #77ACA2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.tweak-params-button:hover {
+  background-color: #77ACA2;
+} */
+
+/* Style for the parameters pop-up */
+.params-popup {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  align-items: center;
+  justify-content: center;
+  background-color: #031926;
+  padding: 20px;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+  width: 40%;
+  height: 40%;
+  background-color: #0B344E; 
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  max-width: 80%;
+  max-height: 80%;
+  overflow: auto;
+}
+
+.close-popup-button {
+  position: relative;
+  bottom: 10px;
+  left: 10px;
+  background-color: #77ACA2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.close-popup-button:hover {
+  background-color: #0B344E;
+}
+
+.param-input {
+  padding: 10px;
+}
+
+.params-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 5;
+  
+}
+
+.params-popup h2 {
+ color: #77ACA2;
+}
+
+.tweak-params-button {
+  max-width: 30%;
+  max-height: 20%;
+  border-radius: 10px;
+  color: #E7E0D3;
+  font-weight: bold;
+  border-radius: 10px;
+  border-color: #ffffffa6;
+  padding: 10px 20px;  
+  cursor: pointer;
+  font-size: 20px;
 }
