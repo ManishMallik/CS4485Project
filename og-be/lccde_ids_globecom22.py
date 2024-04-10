@@ -379,8 +379,8 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
          cb_iterations=100, cb_learning_rate=0.03, cb_depth=6, cb_l2_leaf_reg=3, cb_colsample_bylevel=1.0, cb_border_count=254,
          cb_random_strength=1.0, cb_bootstrap_type='Bayesian'):
 
-    # df = pd.read_csv("https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv")
     df = pd.read_csv("https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv")
+    # df = pd.read_csv("data/CICIDS2017_sample.csv")
     df.Label.value_counts()
 
     # df
