@@ -33,7 +33,8 @@ from sklearn.ensemble import RandomForestClassifier,ExtraTreesClassifier
 from sklearn.tree import DecisionTreeClassifier
 import xgboost as xgb
 from xgboost import plot_importance
-
+# -*- coding: utf-8 -*-
+import numpy as np
 
 
 """## Read the sampled CICIDS2017 dataset
@@ -46,176 +47,36 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.cluster import MiniBatchKMeans
-
-def preprocess_data():
-    # Read dataset
-    df = pd.read_csv('https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample.csv')
-
-    # Z-score normalization
-    features = df.dtypes[df.dtypes != 'object'].index
-    df[features] = df[features].apply(lambda x: (x - x.mean()) / (x.std()))
-
-    # Fill empty values by 0
-    df = df.fillna(0)
-
-    # Encode labels
-    labelencoder = LabelEncoder()
-    df.iloc[:, -1] = labelencoder.fit_transform(df.iloc[:, -1])
-
-    # Retain the minority class instances and sample the majority class instances using k-means cluster sampling
-    df_minor = df[(df['Label']==6) | (df['Label']==1) | (df['Label']==4)]
-    df_major = df.drop(df_minor.index)
-
-    X = df_major.drop(['Label'], axis=1)
-    y = df_major.iloc[:, -1].values.reshape(-1,1)
-    y = np.ravel(y)
-
-    kmeans = MiniBatchKMeans(n_clusters=1000, random_state=0).fit(X)
-    klabel = kmeans.labels_
-    df_major['klabel'] = klabel
-
-    cols = list(df_major)
-    cols.insert(78, cols.pop(cols.index('Label')))
-    df_major = df_major.loc[:, cols]
-
-    def typicalSampling(group):
-        name = group.name
-        frac = 0.008
-        return group.sample(frac=frac)
-
-    result = df_major.groupby('klabel', group_keys=False).apply(typicalSampling)
-    result = result.drop(['klabel'], axis=1)
-    result = result.append(df_minor)
-
-    # Save the preprocessed data to a CSV file
-    result.to_csv('CICIDS2017.csv', index=0)
-
-    # Split train set and test set
-    df = pd.read_csv('CICIDS2017.csv')
-    X = df.drop(['Label'], axis=1).values
-    y = df.iloc[:, -1].values.reshape(-1,1)
-    y = np.ravel(y)
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8, test_size=0.2, random_state=0, stratify=y)
-
-    return X_train, X_test, y_train, y_test
-
-# Call the function to preprocess and split the data
-X_train, X_test, y_train, y_test = preprocess_data()
-
-"""## Feature engineering
-
-### Feature selection by information gain
-"""
-
 from sklearn.feature_selection import mutual_info_classif
+from hyperopt import hp, fmin, tpe, STATUS_OK, Trials
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, precision_recall_fscore_support
+import xgboost as xgb
+import seaborn as sns
+import matplotlib.pyplot as plt
+from hyperopt import hp, fmin, tpe, STATUS_OK, Trials
+from sklearn.model_selection import cross_val_score, StratifiedKFold
+from sklearn.cluster import MiniBatchKMeans
+from sklearn import metrics
 
-def feature_engineering(X_train, y_train, features):
-    # Calculate feature importance using mutual information
-    df=pd.read_csv('CICIDS2017.csv')
-
-    X = df.drop(['Label'],axis=1).values
-    y = df.iloc[:, -1].values.reshape(-1,1)
-    y=np.ravel(y)
-    importances = mutual_info_classif(X_train, y_train)
-
-    # Sort features by importance
-    f_list = sorted(zip(map(lambda x: round(x, 4), importances), features), reverse=True)
-
-    # Calculate the sum of importance scores
-    Sum = 0
-    fs = []
-    for i in range(0, len(f_list)):
-        Sum = Sum + f_list[i][0]
-        fs.append(f_list[i][1])
-
-    # Select important features until the accumulated importance reaches 90%
-    f_list2 = sorted(zip(map(lambda x: round(x, 4), importances / Sum), features), reverse=True)
-    Sum2 = 0
-    fs = []
-    for i in range(0, len(f_list2)):
-        Sum2 = Sum2 + f_list2[i][0]
-        fs.append(f_list2[i][1])
-        if Sum2 >= 0.9:
-            break
-
-    X_fs = df[fs].values
-
-    return X_fs
-
-# Example usage:
-# X_train, y_train, and features are assumed to be defined earlier
-# X_fs = feature_engineering(X_train, y_train, features)
-# print(X_fs.shape)
-
-
-"""### Feature selection by Fast Correlation Based Filter (FCBF)
-
-The module is imported from the GitHub repo: https://github.com/SantiagoEG/FCBF_module
-"""
-
-# -*- coding: utf-8 -*-
-import numpy as np
-
-def count_vals(x):
-    vals = np.unique(x)
-    occ = np.zeros(shape = vals.shape)
-    for i in range(vals.size):
-        occ[i] = np.sum(x == vals[i])
-    return occ
-
-def entropy(x):
-    n = float(x.shape[0])
-    ocurrence = count_vals(x)
-    px = ocurrence / n
-    return -1* np.sum(px*np.log2(px))
-
-def symmetricalUncertain(x,y):
-    n = float(y.shape[0])
-    vals = np.unique(y)
-    # Computing Entropy for the feature x.
-    Hx = entropy(x)
-    # Computing Entropy for the feature y.
-    Hy = entropy(y)
-    #Computing Joint entropy between x and y.
-    partial = np.zeros(shape = (vals.shape[0]))
-    for i in range(vals.shape[0]):
-       partial[i] = entropy(x[y == vals[i]])
-
-    partial[np.isnan(partial)==1] = 0
-    py = count_vals(y).astype(dtype = 'float64') / n
-    Hxy = np.sum(py[py > 0]*partial)
-    IG = Hx-Hxy
-    return 2*IG/(Hx+Hy)
-
-def suGroup(x, n):
-    m = x.shape[0]
-    x = np.reshape(x, (n,m/n)).T
-    m = x.shape[1]
-    SU_matrix = np.zeros(shape = (m,m))
-    for j in range(m-1):
-        x2 = x[:,j+1::]
-        y = x[:,j]
-        temp = np.apply_along_axis(symmetricalUncertain, 0, x2, y)
-        for k in range(temp.shape[0]):
-            SU_matrix[j,j+1::] = temp
-            SU_matrix[j+1::,j] = temp
-
-    return 1/float(m-1)*np.sum(SU_matrix, axis = 1)
-
-def isprime(a):
-    return all(a % i for i in range(2, a))
-
-
-"""
-get
-"""
-
-def get_i(a):
-    if isprime(a):
-        a -= 1
-    return filter(lambda x: a % x == 0, range(2,a))
-
+from sklearn.cluster import KMeans
+from sklearn.cluster import DBSCAN,MeanShift
+from sklearn.cluster import SpectralClustering,AgglomerativeClustering,AffinityPropagation,Birch,MiniBatchKMeans,MeanShift
+from sklearn.mixture import GaussianMixture, BayesianGaussianMixture
+from sklearn.metrics import classification_report
+from sklearn import metrics
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, precision_recall_fscore_support
+import seaborn as sns
+import matplotlib.pyplot as plt
+from imblearn.over_sampling import SMOTE
+from sklearn.decomposition import KernelPCA
+from FCBF_module import FCBFK
+from sklearn.feature_selection import mutual_info_classif
+from skopt.space import Real, Integer
+from skopt.utils import use_named_args
+from sklearn import metrics
+from skopt import gp_minimize
+import time
 
 """
 FCBF - Fast Correlation Based Filter
@@ -502,915 +363,1047 @@ class FCBFiP(FCBF):
             self.idx_sel[i] = ind
 
 
-def feature_engineer_fcbf(X_fs, y):
-    # Initialize and fit the FCBF feature selection
-    fcbf = FCBFK(k=20)
-    X_fss = fcbf.fit_transform(X_fs, y)
+def main():
+    def preprocess_data():
+        # Read dataset
+        df = pd.read_csv('https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample.csv')
 
-    # Resplit train & test sets after feature selection
-    X_train, X_test, y_train, y_test = train_test_split(X_fss, y, train_size=0.8, test_size=0.2, random_state=0, stratify=y)
+        # Z-score normalization
+        features = df.dtypes[df.dtypes != 'object'].index
+        df[features] = df[features].apply(lambda x: (x - x.mean()) / (x.std()))
 
-    return X_train, X_test, y_train, y_test
+        # Fill empty values by 0
+        df = df.fillna(0)
+
+        # Encode labels
+        labelencoder = LabelEncoder()
+        df.iloc[:, -1] = labelencoder.fit_transform(df.iloc[:, -1])
+
+        # Retain the minority class instances and sample the majority class instances using k-means cluster sampling
+        df_minor = df[(df['Label']==6) | (df['Label']==1) | (df['Label']==4)]
+        df_major = df.drop(df_minor.index)
+
+        X = df_major.drop(['Label'], axis=1)
+        y = df_major.iloc[:, -1].values.reshape(-1,1)
+        y = np.ravel(y)
+
+        kmeans = MiniBatchKMeans(n_clusters=1000, random_state=0).fit(X)
+        klabel = kmeans.labels_
+        df_major['klabel'] = klabel
+
+        cols = list(df_major)
+        cols.insert(78, cols.pop(cols.index('Label')))
+        df_major = df_major.loc[:, cols]
+
+        def typicalSampling(group):
+            name = group.name
+            frac = 0.008
+            return group.sample(frac=frac)
+
+        result = df_major.groupby('klabel', group_keys=False).apply(typicalSampling)
+        result = result.drop(['klabel'], axis=1)
+        result = result.append(df_minor)
+
+        # Save the preprocessed data to a CSV file
+        result.to_csv('CICIDS2017.csv', index=0)
+
+        # Split train set and test set
+        df = pd.read_csv('CICIDS2017.csv')
+        X = df.drop(['Label'], axis=1).values
+        y = df.iloc[:, -1].values.reshape(-1,1)
+        y = np.ravel(y)
+
+        X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8, test_size=0.2, random_state=0, stratify=y)
+
+        return X_train, X_test, y_train, y_test
+
+    # Call the function to preprocess and split the data
+    X_train, X_test, y_train, y_test = preprocess_data()
+
+    """## Feature engineering
+
+    ### Feature selection by information gain
+    """
+
+    def feature_engineering(X_train, y_train, features):
+        # Calculate feature importance using mutual information
+        df=pd.read_csv('CICIDS2017.csv')
+
+        X = df.drop(['Label'],axis=1).values
+        y = df.iloc[:, -1].values.reshape(-1,1)
+        y=np.ravel(y)
+        importances = mutual_info_classif(X_train, y_train)
+
+        # Sort features by importance
+        f_list = sorted(zip(map(lambda x: round(x, 4), importances), features), reverse=True)
+
+        # Calculate the sum of importance scores
+        Sum = 0
+        fs = []
+        for i in range(0, len(f_list)):
+            Sum = Sum + f_list[i][0]
+            fs.append(f_list[i][1])
+
+        # Select important features until the accumulated importance reaches 90%
+        f_list2 = sorted(zip(map(lambda x: round(x, 4), importances / Sum), features), reverse=True)
+        Sum2 = 0
+        fs = []
+        for i in range(0, len(f_list2)):
+            Sum2 = Sum2 + f_list2[i][0]
+            fs.append(f_list2[i][1])
+            if Sum2 >= 0.9:
+                break
+
+        X_fs = df[fs].values
+
+        return X_fs
+
+    # Example usage:
+    # X_train, y_train, and features are assumed to be defined earlier
+    # X_fs = feature_engineering(X_train, y_train, features)
+    # print(X_fs.shape)
 
 
-"""### SMOTE to solve class-imbalance"""
+    """### Feature selection by Fast Correlation Based Filter (FCBF)
 
-def smote_resample(X_train, y_train, sampling_strategy):
-    # Initialize and fit SMOTE with specified sampling strategy
-    smote = SMOTE(n_jobs=-1, sampling_strategy=sampling_strategy)
-    X_train_resampled, y_train_resampled = smote.fit_resample(X_train, y_train)
+    The module is imported from the GitHub repo: https://github.com/SantiagoEG/FCBF_module
+    """
 
-    # Check the class distribution after resampling
-    class_counts = pd.Series(y_train_resampled).value_counts()
+    def count_vals(x):
+        vals = np.unique(x)
+        occ = np.zeros(shape = vals.shape)
+        for i in range(vals.size):
+            occ[i] = np.sum(x == vals[i])
+        return occ
 
-    return X_train_resampled, y_train_resampled, class_counts
+    def entropy(x):
+        n = float(x.shape[0])
+        ocurrence = count_vals(x)
+        px = ocurrence / n
+        return -1* np.sum(px*np.log2(px))
 
-"""## Machine learning model training
+    def symmetricalUncertain(x,y):
+        n = float(y.shape[0])
+        vals = np.unique(y)
+        # Computing Entropy for the feature x.
+        Hx = entropy(x)
+        # Computing Entropy for the feature y.
+        Hy = entropy(y)
+        #Computing Joint entropy between x and y.
+        partial = np.zeros(shape = (vals.shape[0]))
+        for i in range(vals.shape[0]):
+            partial[i] = entropy(x[y == vals[i]])
 
-### Training four base learners: decision tree, random forest, extra trees, XGBoost
+        partial[np.isnan(partial)==1] = 0
+        py = count_vals(y).astype(dtype = 'float64') / n
+        Hxy = np.sum(py[py > 0]*partial)
+        IG = Hx-Hxy
+        return 2*IG/(Hx+Hy)
 
-#### Apply XGBoost
-"""
+    def suGroup(x, n):
+        m = x.shape[0]
+        x = np.reshape(x, (n,m/n)).T
+        m = x.shape[1]
+        SU_matrix = np.zeros(shape = (m,m))
+        for j in range(m-1):
+            x2 = x[:,j+1::]
+            y = x[:,j]
+            temp = np.apply_along_axis(symmetricalUncertain, 0, x2, y)
+            for k in range(temp.shape[0]):
+                SU_matrix[j,j+1::] = temp
+                SU_matrix[j+1::,j] = temp
 
-def xg_base(X_train, X_test, y_train, y_test, xgb_params=None):
-    # Initialize XGBoost classifier with default parameters if custom parameters are not provided
-    if xgb_params is None:
-        xgb_params = {'n_estimators': 10}
+        return 1/float(m-1)*np.sum(SU_matrix, axis = 1)
 
-    # Train XGBoost classifier
-    xg = xgb.XGBClassifier(**xgb_params)
-    xg.fit(X_train, y_train)
-
-    # Evaluate the model
-    xg_score = xg.score(X_test, y_test)
-    y_predict = xg.predict(X_test)
-    y_true = y_test
-
-    # Print evaluation metrics
-    print('Accuracy of XGBoost: ' + str(xg_score))
-    precision, recall, fscore, none = precision_recall_fscore_support(y_true, y_predict, average='weighted')
-    print('Precision of XGBoost: ' + str(precision))
-    print('Recall of XGBoost: ' + str(recall))
-    print('F1-score of XGBoost: ' + str(fscore))
-    print(classification_report(y_true, y_predict))
-
-    # Plot confusion matrix
-    cm = confusion_matrix(y_true, y_predict)
-    f, ax = plt.subplots(figsize=(5, 5))
-    sns.heatmap(cm, annot=True, linewidth=0.5, linecolor="red", fmt=".0f", ax=ax)
-    plt.xlabel("y_pred")
-    plt.ylabel("y_true")
-    plt.show()
+    def isprime(a):
+        return all(a % i for i in range(2, a))
 
 
-"""#### Hyperparameter optimization (HPO) of XGBoost using Bayesian optimization with tree-based Parzen estimator (BO-TPE)
-Based on the GitHub repo for HPO: https://github.com/LiYangHart/Hyperparameter-Optimization-of-Machine-Learning-Algorithms
-"""
+    """
+    get
+    """
 
-from hyperopt import hp, fmin, tpe, STATUS_OK, Trials
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, precision_recall_fscore_support
-import xgboost as xgb
-import seaborn as sns
-import matplotlib.pyplot as plt
+    def get_i(a):
+        if isprime(a):
+            a -= 1
+        return filter(lambda x: a % x == 0, range(2,a))
 
-def xg_hpo(X_train, X_test, y_train, y_test, max_evals=20, space=None):
-    if space is None:
-        # Define the default search space for hyperparameters
+
+    def feature_engineer_fcbf(X_fs, y):
+        # Initialize and fit the FCBF feature selection
+        fcbf = FCBFK(k=20)
+        X_fss = fcbf.fit_transform(X_fs, y)
+
+        # Resplit train & test sets after feature selection
+        X_train, X_test, y_train, y_test = train_test_split(X_fss, y, train_size=0.8, test_size=0.2, random_state=0, stratify=y)
+
+        return X_train, X_test, y_train, y_test
+
+
+    """### SMOTE to solve class-imbalance"""
+
+    def smote_resample(X_train, y_train, sampling_strategy):
+        # Initialize and fit SMOTE with specified sampling strategy
+        smote = SMOTE(n_jobs=-1, sampling_strategy=sampling_strategy)
+        X_train_resampled, y_train_resampled = smote.fit_resample(X_train, y_train)
+
+        # Check the class distribution after resampling
+        class_counts = pd.Series(y_train_resampled).value_counts()
+
+        return X_train_resampled, y_train_resampled, class_counts
+
+    """## Machine learning model training
+
+    ### Training four base learners: decision tree, random forest, extra trees, XGBoost
+
+    #### Apply XGBoost
+    """
+
+    def xg_base(X_train, X_test, y_train, y_test, xgb_params=None):
+        # Initialize XGBoost classifier with default parameters if custom parameters are not provided
+        if xgb_params is None:
+            xgb_params = {'n_estimators': 10}
+
+        # Train XGBoost classifier
+        xg = xgb.XGBClassifier(**xgb_params)
+        xg.fit(X_train, y_train)
+
+        # Evaluate the model
+        xg_score = xg.score(X_test, y_test)
+        y_predict = xg.predict(X_test)
+        y_true = y_test
+
+        # Print evaluation metrics
+        print('Accuracy of XGBoost: ' + str(xg_score))
+        precision, recall, fscore, none = precision_recall_fscore_support(y_true, y_predict, average='weighted')
+        print('Precision of XGBoost: ' + str(precision))
+        print('Recall of XGBoost: ' + str(recall))
+        print('F1-score of XGBoost: ' + str(fscore))
+        print(classification_report(y_true, y_predict))
+
+        # Plot confusion matrix
+        cm = confusion_matrix(y_true, y_predict)
+        f, ax = plt.subplots(figsize=(5, 5))
+        sns.heatmap(cm, annot=True, linewidth=0.5, linecolor="red", fmt=".0f", ax=ax)
+        plt.xlabel("y_pred")
+        plt.ylabel("y_true")
+        plt.show()
+
+
+    """#### Hyperparameter optimization (HPO) of XGBoost using Bayesian optimization with tree-based Parzen estimator (BO-TPE)
+    Based on the GitHub repo for HPO: https://github.com/LiYangHart/Hyperparameter-Optimization-of-Machine-Learning-Algorithms
+    """
+
+
+    def xg_hpo(X_train, X_test, y_train, y_test, max_evals=20, space=None):
+        if space is None:
+            # Define the default search space for hyperparameters
+            space = {
+                'n_estimators': hp.quniform('n_estimators', 10, 100, 5),
+                'max_depth': hp.quniform('max_depth', 4, 100, 1),
+                'learning_rate': hp.normal('learning_rate', 0.01, 0.9),
+            }
+
+        # Define the objective function for hyperparameter optimization
+        def objective(params):
+            params = {
+                'n_estimators': int(params['n_estimators']),
+                'max_depth': int(params['max_depth']),
+                'learning_rate': abs(float(params['learning_rate'])),
+            }
+            clf = xgb.XGBClassifier(**params)
+            clf.fit(X_train, y_train)
+            y_pred = clf.predict(X_test)
+            score = accuracy_score(y_test, y_pred)
+            return {'loss': -score, 'status': STATUS_OK}
+
+        # Perform hyperparameter optimization using Bayesian optimization with tree-based Parzen estimator (BO-TPE)
+        trials = Trials()
+        best = fmin(fn=objective,
+                    space=space,
+                    algo=tpe.suggest,
+                    max_evals=max_evals,
+                    trials=trials)
+        print("XGBoost: Hyperopt estimated optimum {}".format(best))
+
+        # Train XGBoost classifier with the best hyperparameters
+        xg_params = {
+            'learning_rate': best['learning_rate'],
+            'n_estimators': int(best['n_estimators']),
+            'max_depth': int(best['max_depth']),
+        }
+        xg = xgb.XGBClassifier(**xg_params)
+        xg.fit(X_train, y_train)
+
+        # Evaluate the model
+        xg_score = xg.score(X_test, y_test)
+        y_predict = xg.predict(X_test)
+        y_true = y_test
+
+        # Print evaluation metrics
+        print('Accuracy of XGBoost after HPO: ' + str(xg_score))
+        precision, recall, fscore, none = precision_recall_fscore_support(y_true, y_predict, average='weighted')
+        print('Precision of XGBoost after HPO: ' + str(precision))
+        print('Recall of XGBoost after HPO: ' + str(recall))
+        print('F1-score of XGBoost after HPO: ' + str(fscore))
+        print(classification_report(y_true, y_predict))
+
+        # Plot confusion matrix
+        cm = confusion_matrix(y_true, y_predict)
+        f, ax = plt.subplots(figsize=(5, 5))
+        sns.heatmap(cm, annot=True, linewidth=0.5, linecolor="red", fmt=".0f", ax=ax)
+        plt.xlabel("y_pred")
+        plt.ylabel("y_true")
+        plt.show()
+
+    # Example usage:
+    # Assuming X_train_resampled, X_test, y_train_resampled, and y_test are defined earlier
+    # xg_hpo(X_train_resampled, X_test, y_train_resampled, y_test)
+
+
+
+    """#### Apply RF"""
+
+    def rf_base(X_train, X_test, y_train, y_test):
+        # Initialize Random Forest classifier
+        rf = RandomForestClassifier(random_state=0)
+        rf.fit(X_train, y_train)
+
+        # Evaluate the model
+        rf_score = rf.score(X_test, y_test)
+        y_predict = rf.predict(X_test)
+        y_true = y_test
+
+        # Print evaluation metrics
+        print('Accuracy of RF: ' + str(rf_score))
+        precision, recall, fscore, none = precision_recall_fscore_support(y_true, y_predict, average='weighted')
+        print('Precision of RF: ' + str(precision))
+        print('Recall of RF: ' + str(recall))
+        print('F1-score of RF: ' + str(fscore))
+        print(classification_report(y_true, y_predict))
+
+        # Plot confusion matrix
+        cm = confusion_matrix(y_true, y_predict)
+        f, ax = plt.subplots(figsize=(5, 5))
+        sns.heatmap(cm, annot=True, linewidth=0.5, linecolor="red", fmt=".0f", ax=ax)
+        plt.xlabel("y_pred")
+        plt.ylabel("y_true")
+        plt.show()
+
+    """#### Hyperparameter optimization (HPO) of random forest using Bayesian optimization with tree-based Parzen estimator (BO-TPE)
+    Based on the GitHub repo for HPO: https://github.com/LiYangHart/Hyperparameter-Optimization-of-Machine-Learning-Algorithms
+    """
+
+    def rf_hpo(X_train, X_test, y_train, y_test, max_evals=20, space=None):
+        if space is None:
+            # Define the default search space for hyperparameters
+            space = {
+                'n_estimators': hp.quniform('n_estimators', 10, 200, 1),
+                'max_depth': hp.quniform('max_depth', 5, 50, 1),
+                'max_features': hp.quniform('max_features', 1, 20, 1),
+                'min_samples_split': hp.quniform('min_samples_split', 2, 11, 1),
+                'min_samples_leaf': hp.quniform('min_samples_leaf', 1, 11, 1),
+                'criterion': hp.choice('criterion', ['gini', 'entropy'])
+            }
+
+        # Define the objective function for hyperparameter optimization
+        def objective(params):
+            params = {
+                'n_estimators': int(params['n_estimators']),
+                'max_depth': int(params['max_depth']),
+                'max_features': int(params['max_features']),
+                'min_samples_split': int(params['min_samples_split']),
+                'min_samples_leaf': int(params['min_samples_leaf']),
+                'criterion': str(params['criterion'])
+            }
+            clf = RandomForestClassifier(**params)
+            clf.fit(X_train, y_train)
+            score = clf.score(X_test, y_test)
+            return {'loss': -score, 'status': STATUS_OK}
+
+        # Perform hyperparameter optimization using Bayesian optimization with tree-based Parzen estimator (BO-TPE)
+        trials = Trials()
+        best = fmin(fn=objective,
+                    space=space,
+                    algo=tpe.suggest,
+                    max_evals=max_evals,
+                    trials=trials)
+        print("Random Forest: Hyperopt estimated optimum {}".format(best))
+
+        # Train Random Forest classifier with the best hyperparameters
+        rf_params = {
+            'n_estimators': int(best['n_estimators']),
+            'max_depth': int(best['max_depth']),
+            'max_features': int(best['max_features']),
+            'min_samples_split': int(best['min_samples_split']),
+            'min_samples_leaf': int(best['min_samples_leaf']),
+            'criterion': 'gini' if best['criterion'] == 0 else 'entropy'
+        }
+        rf_hpo = RandomForestClassifier(**rf_params)
+        rf_hpo.fit(X_train, y_train)
+
+        # Evaluate the model
+        rf_score = rf_hpo.score(X_test, y_test)
+        y_predict = rf_hpo.predict(X_test)
+        y_true = y_test
+
+        # Print evaluation metrics
+        print('Accuracy of RF after HPO: ' + str(rf_score))
+        precision, recall, fscore, none = precision_recall_fscore_support(y_true, y_predict, average='weighted')
+        print('Precision of RF after HPO: ' + str(precision))
+        print('Recall of RF after HPO: ' + str(recall))
+        print('F1-score of RF after HPO: ' + str(fscore))
+        print(classification_report(y_true, y_predict))
+
+        # Plot confusion matrix
+        cm = confusion_matrix(y_true, y_predict)
+        f, ax = plt.subplots(figsize=(5, 5))
+        sns.heatmap(cm, annot=True, linewidth=0.5, linecolor="red", fmt=".0f", ax=ax)
+        plt.xlabel("y_pred")
+        plt.ylabel("y_true")
+        plt.show()
+
+    # Example usage:
+    # Assuming X_train_resampled, X_test, y_train_resampled, and y_test are defined earlier
+    # rf_hpo(X_train_resampled, X_test, y_train_resampled, y_test)
+
+
+
+
+    """#### Apply DT"""
+
+    def dt_base(X_train, X_test, y_train, y_test):
+        # Initialize Decision Tree classifier
+        dt = DecisionTreeClassifier(random_state=0)
+        dt.fit(X_train, y_train)
+
+        # Evaluate the model
+        dt_score = dt.score(X_test, y_test)
+        y_predict = dt.predict(X_test)
+        y_true = y_test
+
+        # Print evaluation metrics
+        print('Accuracy of DT: ' + str(dt_score))
+        precision, recall, fscore, none = precision_recall_fscore_support(y_true, y_predict, average='weighted')
+        print('Precision of DT: ' + str(precision))
+        print('Recall of DT: ' + str(recall))
+        print('F1-score of DT: ' + str(fscore))
+        print(classification_report(y_true, y_predict))
+
+        # Plot confusion matrix
+        cm = confusion_matrix(y_true, y_predict)
+        f, ax = plt.subplots(figsize=(5, 5))
+        sns.heatmap(cm, annot=True, linewidth=0.5, linecolor="red", fmt=".0f", ax=ax)
+        plt.xlabel("y_pred")
+        plt.ylabel("y_true")
+        plt.show()
+
+    """#### Hyperparameter optimization (HPO) of decision tree using Bayesian optimization with tree-based Parzen estimator (BO-TPE)
+    Based on the GitHub repo for HPO: https://github.com/LiYangHart/Hyperparameter-Optimization-of-Machine-Learning-Algorithms
+    """
+
+    def dt_hpo(X_train, X_test, y_train, y_test, max_evals=50, space=None):
+        if space is None:
+            # Define the default search space for hyperparameters
+            space = {
+                'max_depth': hp.quniform('max_depth', 5, 50, 1),
+                'max_features': hp.quniform('max_features', 1, 20, 1),
+                'min_samples_split': hp.quniform('min_samples_split', 2, 11, 1),
+                'min_samples_leaf': hp.quniform('min_samples_leaf', 1, 11, 1),
+                'criterion': hp.choice('criterion', ['gini', 'entropy'])
+            }
+
+        # Define the objective function for hyperparameter optimization
+        def objective(params):
+            params = {
+                'max_depth': int(params['max_depth']),
+                'max_features': int(params['max_features']),
+                'min_samples_split': int(params['min_samples_split']),
+                'min_samples_leaf': int(params['min_samples_leaf']),
+                'criterion': str(params['criterion'])
+            }
+            clf = DecisionTreeClassifier(**params)
+            clf.fit(X_train, y_train)
+            score = clf.score(X_test, y_test)
+            return {'loss': -score, 'status': STATUS_OK}
+
+        # Perform hyperparameter optimization using Bayesian optimization with tree-based Parzen estimator (BO-TPE)
+        trials = Trials()
+        best = fmin(fn=objective,
+                    space=space,
+                    algo=tpe.suggest,
+                    max_evals=max_evals,
+                    trials=trials)
+        print("Decision tree: Hyperopt estimated optimum {}".format(best))
+
+        # Train Decision Tree classifier with the best hyperparameters
+        dt_params = {
+            'max_depth': int(best['max_depth']),
+            'max_features': int(best['max_features']),
+            'min_samples_split': int(best['min_samples_split']),
+            'min_samples_leaf': int(best['min_samples_leaf']),
+            'criterion': 'gini' if best['criterion'] == 0 else 'entropy'
+        }
+        dt_hpo = DecisionTreeClassifier(**dt_params)
+        dt_hpo.fit(X_train, y_train)
+
+        # Evaluate the model
+        dt_score = dt_hpo.score(X_test, y_test)
+        y_predict = dt_hpo.predict(X_test)
+        y_true = y_test
+
+        # Print evaluation metrics
+        print('Accuracy of DT after HPO: ' + str(dt_score))
+        precision, recall, fscore, none = precision_recall_fscore_support(y_true, y_predict, average='weighted')
+        print('Precision of DT after HPO: ' + str(precision))
+        print('Recall of DT after HPO: ' + str(recall))
+        print('F1-score of DT after HPO: ' + str(fscore))
+        print(classification_report(y_true, y_predict))
+
+        # Plot confusion matrix
+        cm = confusion_matrix(y_true, y_predict)
+        f, ax = plt.subplots(figsize=(5, 5))
+        sns.heatmap(cm, annot=True, linewidth=0.5, linecolor="red", fmt=".0f", ax=ax)
+        plt.xlabel("y_pred")
+        plt.ylabel("y_true")
+        plt.show()
+
+
+
+    """#### Apply ET"""
+
+    def et_base(X_train, X_test, y_train, y_test):
+        # Initialize Extra Trees classifier
+        et = ExtraTreesClassifier(random_state=0)
+        et.fit(X_train, y_train)
+
+        # Evaluate the model
+        et_score = et.score(X_test, y_test)
+        y_predict = et.predict(X_test)
+        y_true = y_test
+
+        # Print evaluation metrics
+        print('Accuracy of ET: ' + str(et_score))
+        precision, recall, fscore, none = precision_recall_fscore_support(y_true, y_predict, average='weighted')
+        print('Precision of ET: ' + str(precision))
+        print('Recall of ET: ' + str(recall))
+        print('F1-score of ET: ' + str(fscore))
+        print(classification_report(y_true, y_predict))
+
+        # Plot confusion matrix
+        cm = confusion_matrix(y_true, y_predict)
+        f, ax = plt.subplots(figsize=(5, 5))
+        sns.heatmap(cm, annot=True, linewidth=0.5, linecolor="red", fmt=".0f", ax=ax)
+        plt.xlabel("y_pred")
+        plt.ylabel("y_true")
+        plt.show()
+
+    """#### Hyperparameter optimization (HPO) of extra trees using Bayesian optimization with tree-based Parzen estimator (BO-TPE)
+    Based on the GitHub repo for HPO: https://github.com/LiYangHart/Hyperparameter-Optimization-of-Machine-Learning-Algorithms
+    """
+
+    # Define the objective function
+    def et_hpo(X_train, X_test, y_train, y_test):
+        # Define the objective function
+        def objective(params):
+            params = {
+                'n_estimators': int(params['n_estimators']),
+                'max_depth': int(params['max_depth']),
+                'max_features': int(params['max_features']),
+                "min_samples_split": int(params['min_samples_split']),
+                "min_samples_leaf": int(params['min_samples_leaf']),
+                "criterion": str(params['criterion'])
+            }
+            clf = ExtraTreesClassifier(**params)
+            clf.fit(X_train, y_train)
+            score = clf.score(X_test, y_test)
+
+            return {'loss': -score, 'status': STATUS_OK }
+
+        # Define the hyperparameter configuration space
+        space = {
+            'n_estimators': hp.quniform('n_estimators', 10, 200, 1),
+            'max_depth': hp.quniform('max_depth', 5, 50, 1),
+            "max_features": hp.quniform('max_features', 1, 20, 1),
+            "min_samples_split": hp.quniform('min_samples_split', 2, 11, 1),
+            "min_samples_leaf": hp.quniform('min_samples_leaf', 1, 11, 1),
+            "criterion": hp.choice('criterion', ['gini', 'entropy'])
+        }
+
+        # Perform hyperparameter optimization
+        best = fmin(fn=objective,
+                    space=space,
+                    algo=tpe.suggest,
+                    max_evals=20)
+        print("Extra Trees: Hyperopt estimated optimum {}".format(best))
+
+        # Train the Extra Trees classifier with the optimized hyperparameters
+        et_hpo = ExtraTreesClassifier(**best)
+        et_hpo.fit(X_train, y_train)
+
+        # Evaluate the model
+        et_score = et_hpo.score(X_test, y_test)
+        y_predict = et_hpo.predict(X_test)
+        y_true = y_test
+
+        # Print evaluation metrics
+        print('Accuracy of ET: ' + str(et_score))
+        precision, recall, fscore, none = precision_recall_fscore_support(y_true, y_predict, average='weighted')
+        print('Precision of ET: ' + str(precision))
+        print('Recall of ET: ' + str(recall))
+        print('F1-score of ET: ' + str(fscore))
+        print(classification_report(y_true, y_predict))
+
+        # Plot confusion matrix
+        cm = confusion_matrix(y_true, y_predict)
+        f, ax = plt.subplots(figsize=(5, 5))
+        sns.heatmap(cm, annot=True, linewidth=0.5, linecolor="red", fmt=".0f", ax=ax)
+        plt.xlabel("y_pred")
+        plt.ylabel("y_true")
+        plt.show()
+
+
+
+    """### Apply Stacking
+    The ensemble model that combines the four ML models (DT, RF, ET, XGBoost)
+    """
+
+    def stack_base(dt_train, et_train, rf_train, xg_train, dt_test, et_test, rf_test, xg_test, y_train, y_test):
+        base_predictions_train = pd.DataFrame({
+            'DecisionTree': dt_train.ravel(),
+            'RandomForest': rf_train.ravel(),
+            'ExtraTrees': et_train.ravel(),
+            'XgBoost': xg_train.ravel(),
+        })
+
+        dt_train = dt_train.reshape(-1, 1)
+        et_train = et_train.reshape(-1, 1)
+        rf_train = rf_train.reshape(-1, 1)
+        xg_train = xg_train.reshape(-1, 1)
+        dt_test = dt_test.reshape(-1, 1)
+        et_test = et_test.reshape(-1, 1)
+        rf_test = rf_test.reshape(-1, 1)
+        xg_test = xg_test.reshape(-1, 1)
+
+        x_train = np.concatenate((dt_train, et_train, rf_train, xg_train), axis=1)
+        x_test = np.concatenate((dt_test, et_test, rf_test, xg_test), axis=1)
+
+        stk = xgb.XGBClassifier().fit(x_train, y_train)
+        y_predict = stk.predict(x_test)
+        stk_score = accuracy_score(y_test, y_predict)
+        print('Accuracy of Stacking: ' + str(stk_score))
+        precision, recall, fscore, none = precision_recall_fscore_support(y_test, y_predict, average='weighted')
+        print('Precision of Stacking: ' + str(precision))
+        print('Recall of Stacking: ' + str(recall))
+        print('F1-score of Stacking: ' + str(fscore))
+        print(classification_report(y_test, y_predict))
+        cm = confusion_matrix(y_test, y_predict)
+        f, ax = plt.subplots(figsize=(5, 5))
+        sns.heatmap(cm, annot=True, linewidth=0.5, linecolor="red", fmt=".0f", ax=ax)
+        plt.xlabel("y_pred")
+        plt.ylabel("y_true")
+        plt.show()
+
+        return stk_score, precision, recall, fscore, cm
+
+    """#### Hyperparameter optimization (HPO) of the stacking ensemble model (XGBoost) using Bayesian optimization with tree-based Parzen estimator (BO-TPE)
+    Based on the GitHub repo for HPO: https://github.com/LiYangHart/Hyperparameter-Optimization-of-Machine-Learning-Algorithms
+    """
+    def stack_hpo(x_train, y_train, x_test, y_test, max_evals=20):
+        def objective(params):
+            params = {
+                'n_estimators': int(params['n_estimators']),
+                'max_depth': int(params['max_depth']),
+                'learning_rate': abs(float(params['learning_rate'])),
+            }
+            clf = xgb.XGBClassifier(**params)
+            clf.fit(x_train, y_train)
+            y_pred = clf.predict(x_test)
+            score = accuracy_score(y_test, y_pred)
+            return {'loss': -score, 'status': STATUS_OK }
+
         space = {
             'n_estimators': hp.quniform('n_estimators', 10, 100, 5),
             'max_depth': hp.quniform('max_depth', 4, 100, 1),
             'learning_rate': hp.normal('learning_rate', 0.01, 0.9),
         }
 
-    # Define the objective function for hyperparameter optimization
+        best = fmin(fn=objective, space=space, algo=tpe.suggest, max_evals=max_evals)
+        print("XGBoost: Hyperopt estimated optimum {}".format(best))
+
+        xg = xgb.XGBClassifier(
+            learning_rate=best['learning_rate'],
+            n_estimators=int(best['n_estimators']),
+            max_depth=int(best['max_depth'])
+        )
+        xg.fit(x_train, y_train)
+        xg_score = xg.score(x_test, y_test)
+        y_predict = xg.predict(x_test)
+        y_true = y_test
+        print('Accuracy of XGBoost: ' + str(xg_score))
+        precision, recall, fscore, none = precision_recall_fscore_support(y_true, y_predict, average='weighted')
+        print('Precision of XGBoost: ' + str(precision))
+        print('Recall of XGBoost: ' + str(recall))
+        print('F1-score of XGBoost: ' + str(fscore))
+        print(classification_report(y_true, y_predict))
+        cm = confusion_matrix(y_true, y_predict)
+        f, ax = plt.subplots(figsize=(5, 5))
+        sns.heatmap(cm, annot=True, linewidth=0.5, linecolor="red", fmt=".0f", ax=ax)
+        plt.xlabel("y_pred")
+        plt.ylabel("y_true")
+        plt.show()
+
+    """## Anomaly-based IDS
+
+    ### Generate the port-scan datasets for unknown attack detection
+    """
+    def anomaly_based_ids():
+        # Generate port-scan datasets
+        df = pd.read_csv('https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv')
+
+        df1 = df[df['Label'] != 5]
+        df1['Label'][df1['Label'] > 0] = 1
+        df1.to_csv('CICIDS2017_sample_km_without_portscan.csv', index=0)
+
+        df2 = df[df['Label'] == 5]
+        df2['Label'][df2['Label'] == 5] = 1
+        df2.to_csv('CICIDS2017_sample_km_portscan.csv', index=0)
+
+        # Read the generated datasets
+        df1 = pd.read_csv('CICIDS2017_sample_km_without_portscan.csv')
+        df2 = pd.read_csv('CICIDS2017_sample_km_portscan.csv')
+
+        # Feature engineering (IG)
+        features = df1.drop(['Label'], axis=1).dtypes[df1.dtypes != 'object'].index
+        df1[features] = df1[features].apply(lambda x: (x - x.mean()) / (x.std()))
+        df2[features] = df2[features].apply(lambda x: (x - x.mean()) / (x.std()))
+        df1 = df1.fillna(0)
+        df2 = df2.fillna(0)
+
+        # Combine datasets
+        df2p = df1[df1['Label'] == 0]
+        df2pp = df2p.sample(n=None, frac=1255 / 18225, replace=False, weights=None, random_state=None, axis=0)
+        df2 = pd.concat([df2, df2pp])
+        df = df1.append(df2)
+
+        X = df.drop(['Label'], axis=1).values
+        y = df.iloc[:, -1].values.reshape(-1, 1)
+        y = np.ravel(y)
+
+        # Feature selection by IG
+        importances = mutual_info_classif(X, y)
+
+        f_list = sorted(zip(map(lambda x: round(x, 4), importances), features), reverse=True)
+        Sum = 0
+        fs = []
+        for i in range(len(f_list)):
+            Sum += f_list[i][0]
+            fs.append(f_list[i][1])
+            if Sum >= 0.9:
+                break
+
+        X_fs = df[fs].values
+
+        # Feature selection by FCBF
+        fcbf = FCBFK(k=20)
+        X_fss = fcbf.fit_transform(X_fs, y)
+
+        # KPCA
+        kpca = KernelPCA(n_components=10, kernel='rbf')
+        kpca.fit(X_fss, y)
+        X_kpca = kpca.transform(X_fss)
+
+        # Train-test split
+        X_train = X_kpca[:len(df1)]
+        y_train = y[:len(df1)]
+        X_test = X_kpca[len(df1):]
+        y_test = y[len(df1):]
+
+        # SMOTE for class imbalance
+        smote = SMOTE(n_jobs=-1, sampling_strategy={1: 18225})
+        X_train, y_train = smote.fit_resample(X_train, y_train)
+
+        return X_train, y_train, X_test, y_test
+
+    """### Apply the cluster labeling (CL) k-means method"""
+    def CL_kmeans(X_train, X_test, y_train, y_test,n,b=100):
+        km_cluster = MiniBatchKMeans(n_clusters=n,batch_size=b)
+        result = km_cluster.fit_predict(X_train)
+        result2 = km_cluster.predict(X_test)
+
+        count=0
+        a=np.zeros(n)
+        b=np.zeros(n)
+        for v in range(0,n):
+            for i in range(0,len(y_train)):
+                if result[i]==v:
+                    if y_train[i]==1:
+                        a[v]=a[v]+1
+                    else:
+                        b[v]=b[v]+1
+        list1=[]
+        list2=[]
+        for v in range(0,n):
+            if a[v]<=b[v]:
+                list1.append(v)
+            else:
+                list2.append(v)
+        for v in range(0,len(y_test)):
+            if result2[v] in list1:
+                result2[v]=0
+            elif result2[v] in list2:
+                result2[v]=1
+            else:
+                print("-1")
+        print(classification_report(y_test, result2))
+        cm=confusion_matrix(y_test,result2)
+        acc=metrics.accuracy_score(y_test,result2)
+        print(str(acc))
+        print(cm)
+
+    CL_kmeans(X_train, X_test, y_train, y_test, 8)
+
+
+    """### Hyperparameter optimization of CL-k-means
+    Tune "k"
+    """
+
+    #Hyperparameter optimization by BO-GP
+
+    space  = [Integer(2, 50, name='n_clusters')]
+    @use_named_args(space)
+    def objective(**params):
+        km_cluster = MiniBatchKMeans(batch_size=100, **params)
+        n=params['n_clusters']
+
+        result = km_cluster.fit_predict(X_train)
+        result2 = km_cluster.predict(X_test)
+
+        count=0
+        a=np.zeros(n)
+        b=np.zeros(n)
+        for v in range(0,n):
+            for i in range(0,len(y_train)):
+                if result[i]==v:
+                    if y_train[i]==1:
+                        a[v]=a[v]+1
+                    else:
+                        b[v]=b[v]+1
+        list1=[]
+        list2=[]
+        for v in range(0,n):
+            if a[v]<=b[v]:
+                list1.append(v)
+            else:
+                list2.append(v)
+        for v in range(0,len(y_test)):
+            if result2[v] in list1:
+                result2[v]=0
+            elif result2[v] in list2:
+                result2[v]=1
+            else:
+                print("-1")
+        cm=metrics.accuracy_score(y_test,result2)
+        print(str(n)+" "+str(cm))
+        return (1-cm)
+
+    t1=time.time()
+    res_gp = gp_minimize(objective, space, n_calls=20, random_state=0)
+    t2=time.time()
+    print(t2-t1)
+    print("Best score=%.4f" % (1-res_gp.fun))
+    print("""Best parameters: n_clusters=%d""" % (res_gp.x[0]))
+
+    #Hyperparameter optimization by BO-TPE
+
     def objective(params):
         params = {
-            'n_estimators': int(params['n_estimators']),
-            'max_depth': int(params['max_depth']),
-            'learning_rate': abs(float(params['learning_rate'])),
+            'n_clusters': int(params['n_clusters']),
         }
-        clf = xgb.XGBClassifier(**params)
-        clf.fit(X_train, y_train)
-        y_pred = clf.predict(X_test)
-        score = accuracy_score(y_test, y_pred)
-        return {'loss': -score, 'status': STATUS_OK}
+        km_cluster = MiniBatchKMeans(batch_size=100, **params)
+        n=params['n_clusters']
 
-    # Perform hyperparameter optimization using Bayesian optimization with tree-based Parzen estimator (BO-TPE)
-    trials = Trials()
-    best = fmin(fn=objective,
-                space=space,
-                algo=tpe.suggest,
-                max_evals=max_evals,
-                trials=trials)
-    print("XGBoost: Hyperopt estimated optimum {}".format(best))
+        result = km_cluster.fit_predict(X_train)
+        result2 = km_cluster.predict(X_test)
 
-    # Train XGBoost classifier with the best hyperparameters
-    xg_params = {
-        'learning_rate': best['learning_rate'],
-        'n_estimators': int(best['n_estimators']),
-        'max_depth': int(best['max_depth']),
-    }
-    xg = xgb.XGBClassifier(**xg_params)
-    xg.fit(X_train, y_train)
-
-    # Evaluate the model
-    xg_score = xg.score(X_test, y_test)
-    y_predict = xg.predict(X_test)
-    y_true = y_test
-
-    # Print evaluation metrics
-    print('Accuracy of XGBoost after HPO: ' + str(xg_score))
-    precision, recall, fscore, none = precision_recall_fscore_support(y_true, y_predict, average='weighted')
-    print('Precision of XGBoost after HPO: ' + str(precision))
-    print('Recall of XGBoost after HPO: ' + str(recall))
-    print('F1-score of XGBoost after HPO: ' + str(fscore))
-    print(classification_report(y_true, y_predict))
-
-    # Plot confusion matrix
-    cm = confusion_matrix(y_true, y_predict)
-    f, ax = plt.subplots(figsize=(5, 5))
-    sns.heatmap(cm, annot=True, linewidth=0.5, linecolor="red", fmt=".0f", ax=ax)
-    plt.xlabel("y_pred")
-    plt.ylabel("y_true")
-    plt.show()
-
-# Example usage:
-# Assuming X_train_resampled, X_test, y_train_resampled, and y_test are defined earlier
-# xg_hpo(X_train_resampled, X_test, y_train_resampled, y_test)
-
-
-
-"""#### Apply RF"""
-
-def rf_base(X_train, X_test, y_train, y_test):
-    # Initialize Random Forest classifier
-    rf = RandomForestClassifier(random_state=0)
-    rf.fit(X_train, y_train)
-
-    # Evaluate the model
-    rf_score = rf.score(X_test, y_test)
-    y_predict = rf.predict(X_test)
-    y_true = y_test
-
-    # Print evaluation metrics
-    print('Accuracy of RF: ' + str(rf_score))
-    precision, recall, fscore, none = precision_recall_fscore_support(y_true, y_predict, average='weighted')
-    print('Precision of RF: ' + str(precision))
-    print('Recall of RF: ' + str(recall))
-    print('F1-score of RF: ' + str(fscore))
-    print(classification_report(y_true, y_predict))
-
-    # Plot confusion matrix
-    cm = confusion_matrix(y_true, y_predict)
-    f, ax = plt.subplots(figsize=(5, 5))
-    sns.heatmap(cm, annot=True, linewidth=0.5, linecolor="red", fmt=".0f", ax=ax)
-    plt.xlabel("y_pred")
-    plt.ylabel("y_true")
-    plt.show()
-
-"""#### Hyperparameter optimization (HPO) of random forest using Bayesian optimization with tree-based Parzen estimator (BO-TPE)
-Based on the GitHub repo for HPO: https://github.com/LiYangHart/Hyperparameter-Optimization-of-Machine-Learning-Algorithms
-"""
-
-from hyperopt import hp, fmin, tpe, STATUS_OK, Trials
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, precision_recall_fscore_support
-import seaborn as sns
-import matplotlib.pyplot as plt
-
-def rf_hpo(X_train, X_test, y_train, y_test, max_evals=20, space=None):
-    if space is None:
-        # Define the default search space for hyperparameters
-        space = {
-            'n_estimators': hp.quniform('n_estimators', 10, 200, 1),
-            'max_depth': hp.quniform('max_depth', 5, 50, 1),
-            'max_features': hp.quniform('max_features', 1, 20, 1),
-            'min_samples_split': hp.quniform('min_samples_split', 2, 11, 1),
-            'min_samples_leaf': hp.quniform('min_samples_leaf', 1, 11, 1),
-            'criterion': hp.choice('criterion', ['gini', 'entropy'])
-        }
-
-    # Define the objective function for hyperparameter optimization
-    def objective(params):
-        params = {
-            'n_estimators': int(params['n_estimators']),
-            'max_depth': int(params['max_depth']),
-            'max_features': int(params['max_features']),
-            'min_samples_split': int(params['min_samples_split']),
-            'min_samples_leaf': int(params['min_samples_leaf']),
-            'criterion': str(params['criterion'])
-        }
-        clf = RandomForestClassifier(**params)
-        clf.fit(X_train, y_train)
-        score = clf.score(X_test, y_test)
-        return {'loss': -score, 'status': STATUS_OK}
-
-    # Perform hyperparameter optimization using Bayesian optimization with tree-based Parzen estimator (BO-TPE)
-    trials = Trials()
-    best = fmin(fn=objective,
-                space=space,
-                algo=tpe.suggest,
-                max_evals=max_evals,
-                trials=trials)
-    print("Random Forest: Hyperopt estimated optimum {}".format(best))
-
-    # Train Random Forest classifier with the best hyperparameters
-    rf_params = {
-        'n_estimators': int(best['n_estimators']),
-        'max_depth': int(best['max_depth']),
-        'max_features': int(best['max_features']),
-        'min_samples_split': int(best['min_samples_split']),
-        'min_samples_leaf': int(best['min_samples_leaf']),
-        'criterion': 'gini' if best['criterion'] == 0 else 'entropy'
-    }
-    rf_hpo = RandomForestClassifier(**rf_params)
-    rf_hpo.fit(X_train, y_train)
-
-    # Evaluate the model
-    rf_score = rf_hpo.score(X_test, y_test)
-    y_predict = rf_hpo.predict(X_test)
-    y_true = y_test
-
-    # Print evaluation metrics
-    print('Accuracy of RF after HPO: ' + str(rf_score))
-    precision, recall, fscore, none = precision_recall_fscore_support(y_true, y_predict, average='weighted')
-    print('Precision of RF after HPO: ' + str(precision))
-    print('Recall of RF after HPO: ' + str(recall))
-    print('F1-score of RF after HPO: ' + str(fscore))
-    print(classification_report(y_true, y_predict))
-
-    # Plot confusion matrix
-    cm = confusion_matrix(y_true, y_predict)
-    f, ax = plt.subplots(figsize=(5, 5))
-    sns.heatmap(cm, annot=True, linewidth=0.5, linecolor="red", fmt=".0f", ax=ax)
-    plt.xlabel("y_pred")
-    plt.ylabel("y_true")
-    plt.show()
-
-# Example usage:
-# Assuming X_train_resampled, X_test, y_train_resampled, and y_test are defined earlier
-# rf_hpo(X_train_resampled, X_test, y_train_resampled, y_test)
-
-
-
-
-"""#### Apply DT"""
-
-def dt_base(X_train, X_test, y_train, y_test):
-    # Initialize Decision Tree classifier
-    dt = DecisionTreeClassifier(random_state=0)
-    dt.fit(X_train, y_train)
-
-    # Evaluate the model
-    dt_score = dt.score(X_test, y_test)
-    y_predict = dt.predict(X_test)
-    y_true = y_test
-
-    # Print evaluation metrics
-    print('Accuracy of DT: ' + str(dt_score))
-    precision, recall, fscore, none = precision_recall_fscore_support(y_true, y_predict, average='weighted')
-    print('Precision of DT: ' + str(precision))
-    print('Recall of DT: ' + str(recall))
-    print('F1-score of DT: ' + str(fscore))
-    print(classification_report(y_true, y_predict))
-
-    # Plot confusion matrix
-    cm = confusion_matrix(y_true, y_predict)
-    f, ax = plt.subplots(figsize=(5, 5))
-    sns.heatmap(cm, annot=True, linewidth=0.5, linecolor="red", fmt=".0f", ax=ax)
-    plt.xlabel("y_pred")
-    plt.ylabel("y_true")
-    plt.show()
-
-"""#### Hyperparameter optimization (HPO) of decision tree using Bayesian optimization with tree-based Parzen estimator (BO-TPE)
-Based on the GitHub repo for HPO: https://github.com/LiYangHart/Hyperparameter-Optimization-of-Machine-Learning-Algorithms
-"""
-
-def dt_hpo(X_train, X_test, y_train, y_test, max_evals=50, space=None):
-    if space is None:
-        # Define the default search space for hyperparameters
-        space = {
-            'max_depth': hp.quniform('max_depth', 5, 50, 1),
-            'max_features': hp.quniform('max_features', 1, 20, 1),
-            'min_samples_split': hp.quniform('min_samples_split', 2, 11, 1),
-            'min_samples_leaf': hp.quniform('min_samples_leaf', 1, 11, 1),
-            'criterion': hp.choice('criterion', ['gini', 'entropy'])
-        }
-
-    # Define the objective function for hyperparameter optimization
-    def objective(params):
-        params = {
-            'max_depth': int(params['max_depth']),
-            'max_features': int(params['max_features']),
-            'min_samples_split': int(params['min_samples_split']),
-            'min_samples_leaf': int(params['min_samples_leaf']),
-            'criterion': str(params['criterion'])
-        }
-        clf = DecisionTreeClassifier(**params)
-        clf.fit(X_train, y_train)
-        score = clf.score(X_test, y_test)
-        return {'loss': -score, 'status': STATUS_OK}
-
-    # Perform hyperparameter optimization using Bayesian optimization with tree-based Parzen estimator (BO-TPE)
-    trials = Trials()
-    best = fmin(fn=objective,
-                space=space,
-                algo=tpe.suggest,
-                max_evals=max_evals,
-                trials=trials)
-    print("Decision tree: Hyperopt estimated optimum {}".format(best))
-
-    # Train Decision Tree classifier with the best hyperparameters
-    dt_params = {
-        'max_depth': int(best['max_depth']),
-        'max_features': int(best['max_features']),
-        'min_samples_split': int(best['min_samples_split']),
-        'min_samples_leaf': int(best['min_samples_leaf']),
-        'criterion': 'gini' if best['criterion'] == 0 else 'entropy'
-    }
-    dt_hpo = DecisionTreeClassifier(**dt_params)
-    dt_hpo.fit(X_train, y_train)
-
-    # Evaluate the model
-    dt_score = dt_hpo.score(X_test, y_test)
-    y_predict = dt_hpo.predict(X_test)
-    y_true = y_test
-
-    # Print evaluation metrics
-    print('Accuracy of DT after HPO: ' + str(dt_score))
-    precision, recall, fscore, none = precision_recall_fscore_support(y_true, y_predict, average='weighted')
-    print('Precision of DT after HPO: ' + str(precision))
-    print('Recall of DT after HPO: ' + str(recall))
-    print('F1-score of DT after HPO: ' + str(fscore))
-    print(classification_report(y_true, y_predict))
-
-    # Plot confusion matrix
-    cm = confusion_matrix(y_true, y_predict)
-    f, ax = plt.subplots(figsize=(5, 5))
-    sns.heatmap(cm, annot=True, linewidth=0.5, linecolor="red", fmt=".0f", ax=ax)
-    plt.xlabel("y_pred")
-    plt.ylabel("y_true")
-    plt.show()
-
-
-
-"""#### Apply ET"""
-
-def et_base(X_train, X_test, y_train, y_test):
-    # Initialize Extra Trees classifier
-    et = ExtraTreesClassifier(random_state=0)
-    et.fit(X_train, y_train)
-
-    # Evaluate the model
-    et_score = et.score(X_test, y_test)
-    y_predict = et.predict(X_test)
-    y_true = y_test
-
-    # Print evaluation metrics
-    print('Accuracy of ET: ' + str(et_score))
-    precision, recall, fscore, none = precision_recall_fscore_support(y_true, y_predict, average='weighted')
-    print('Precision of ET: ' + str(precision))
-    print('Recall of ET: ' + str(recall))
-    print('F1-score of ET: ' + str(fscore))
-    print(classification_report(y_true, y_predict))
-
-    # Plot confusion matrix
-    cm = confusion_matrix(y_true, y_predict)
-    f, ax = plt.subplots(figsize=(5, 5))
-    sns.heatmap(cm, annot=True, linewidth=0.5, linecolor="red", fmt=".0f", ax=ax)
-    plt.xlabel("y_pred")
-    plt.ylabel("y_true")
-    plt.show()
-
-"""#### Hyperparameter optimization (HPO) of extra trees using Bayesian optimization with tree-based Parzen estimator (BO-TPE)
-Based on the GitHub repo for HPO: https://github.com/LiYangHart/Hyperparameter-Optimization-of-Machine-Learning-Algorithms
-"""
-
-# Hyperparameter optimization of extra trees
-from hyperopt import hp, fmin, tpe, STATUS_OK, Trials
-from sklearn.model_selection import cross_val_score, StratifiedKFold
-# Define the objective function
-def et_hpo(X_train, X_test, y_train, y_test):
-    # Define the objective function
-    def objective(params):
-        params = {
-            'n_estimators': int(params['n_estimators']),
-            'max_depth': int(params['max_depth']),
-            'max_features': int(params['max_features']),
-            "min_samples_split": int(params['min_samples_split']),
-            "min_samples_leaf": int(params['min_samples_leaf']),
-            "criterion": str(params['criterion'])
-        }
-        clf = ExtraTreesClassifier(**params)
-        clf.fit(X_train, y_train)
-        score = clf.score(X_test, y_test)
-
-        return {'loss': -score, 'status': STATUS_OK }
-
-    # Define the hyperparameter configuration space
+        count=0
+        a=np.zeros(n)
+        b=np.zeros(n)
+        for v in range(0,n):
+            for i in range(0,len(y_train)):
+                if result[i]==v:
+                    if y_train[i]==1:
+                        a[v]=a[v]+1
+                    else:
+                        b[v]=b[v]+1
+        list1=[]
+        list2=[]
+        for v in range(0,n):
+            if a[v]<=b[v]:
+                list1.append(v)
+            else:
+                list2.append(v)
+        for v in range(0,len(y_test)):
+            if result2[v] in list1:
+                result2[v]=0
+            elif result2[v] in list2:
+                result2[v]=1
+            else:
+                print("-1")
+        score=metrics.accuracy_score(y_test,result2)
+        print(str(params['n_clusters'])+" "+str(score))
+        return {'loss':1-score, 'status': STATUS_OK }
     space = {
-        'n_estimators': hp.quniform('n_estimators', 10, 200, 1),
-        'max_depth': hp.quniform('max_depth', 5, 50, 1),
-        "max_features": hp.quniform('max_features', 1, 20, 1),
-        "min_samples_split": hp.quniform('min_samples_split', 2, 11, 1),
-        "min_samples_leaf": hp.quniform('min_samples_leaf', 1, 11, 1),
-        "criterion": hp.choice('criterion', ['gini', 'entropy'])
+        'n_clusters': hp.quniform('n_clusters', 2, 50, 1),
     }
 
-    # Perform hyperparameter optimization
     best = fmin(fn=objective,
                 space=space,
                 algo=tpe.suggest,
                 max_evals=20)
-    print("Extra Trees: Hyperopt estimated optimum {}".format(best))
-
-    # Train the Extra Trees classifier with the optimized hyperparameters
-    et_hpo = ExtraTreesClassifier(**best)
-    et_hpo.fit(X_train, y_train)
-
-    # Evaluate the model
-    et_score = et_hpo.score(X_test, y_test)
-    y_predict = et_hpo.predict(X_test)
-    y_true = y_test
-
-    # Print evaluation metrics
-    print('Accuracy of ET: ' + str(et_score))
-    precision, recall, fscore, none = precision_recall_fscore_support(y_true, y_predict, average='weighted')
-    print('Precision of ET: ' + str(precision))
-    print('Recall of ET: ' + str(recall))
-    print('F1-score of ET: ' + str(fscore))
-    print(classification_report(y_true, y_predict))
-
-    # Plot confusion matrix
-    cm = confusion_matrix(y_true, y_predict)
-    f, ax = plt.subplots(figsize=(5, 5))
-    sns.heatmap(cm, annot=True, linewidth=0.5, linecolor="red", fmt=".0f", ax=ax)
-    plt.xlabel("y_pred")
-    plt.ylabel("y_true")
-    plt.show()
-
-
-
-"""### Apply Stacking
-The ensemble model that combines the four ML models (DT, RF, ET, XGBoost)
-"""
-
-def stack_base(dt_train, et_train, rf_train, xg_train, dt_test, et_test, rf_test, xg_test, y_train, y_test):
-    base_predictions_train = pd.DataFrame({
-        'DecisionTree': dt_train.ravel(),
-        'RandomForest': rf_train.ravel(),
-        'ExtraTrees': et_train.ravel(),
-        'XgBoost': xg_train.ravel(),
-    })
-
-    dt_train = dt_train.reshape(-1, 1)
-    et_train = et_train.reshape(-1, 1)
-    rf_train = rf_train.reshape(-1, 1)
-    xg_train = xg_train.reshape(-1, 1)
-    dt_test = dt_test.reshape(-1, 1)
-    et_test = et_test.reshape(-1, 1)
-    rf_test = rf_test.reshape(-1, 1)
-    xg_test = xg_test.reshape(-1, 1)
-
-    x_train = np.concatenate((dt_train, et_train, rf_train, xg_train), axis=1)
-    x_test = np.concatenate((dt_test, et_test, rf_test, xg_test), axis=1)
-
-    stk = xgb.XGBClassifier().fit(x_train, y_train)
-    y_predict = stk.predict(x_test)
-    stk_score = accuracy_score(y_test, y_predict)
-    print('Accuracy of Stacking: ' + str(stk_score))
-    precision, recall, fscore, none = precision_recall_fscore_support(y_test, y_predict, average='weighted')
-    print('Precision of Stacking: ' + str(precision))
-    print('Recall of Stacking: ' + str(recall))
-    print('F1-score of Stacking: ' + str(fscore))
-    print(classification_report(y_test, y_predict))
-    cm = confusion_matrix(y_test, y_predict)
-    f, ax = plt.subplots(figsize=(5, 5))
-    sns.heatmap(cm, annot=True, linewidth=0.5, linecolor="red", fmt=".0f", ax=ax)
-    plt.xlabel("y_pred")
-    plt.ylabel("y_true")
-    plt.show()
-
-    return stk_score, precision, recall, fscore, cm
-
-"""#### Hyperparameter optimization (HPO) of the stacking ensemble model (XGBoost) using Bayesian optimization with tree-based Parzen estimator (BO-TPE)
-Based on the GitHub repo for HPO: https://github.com/LiYangHart/Hyperparameter-Optimization-of-Machine-Learning-Algorithms
-"""
-
-from hyperopt import hp, fmin, tpe, STATUS_OK, Trials
-from sklearn.model_selection import cross_val_score, StratifiedKFold
-def stack_hpo(x_train, y_train, x_test, y_test, max_evals=20):
-    def objective(params):
-        params = {
-            'n_estimators': int(params['n_estimators']),
-            'max_depth': int(params['max_depth']),
-            'learning_rate': abs(float(params['learning_rate'])),
-        }
-        clf = xgb.XGBClassifier(**params)
-        clf.fit(x_train, y_train)
-        y_pred = clf.predict(x_test)
-        score = accuracy_score(y_test, y_pred)
-        return {'loss': -score, 'status': STATUS_OK }
-
-    space = {
-        'n_estimators': hp.quniform('n_estimators', 10, 100, 5),
-        'max_depth': hp.quniform('max_depth', 4, 100, 1),
-        'learning_rate': hp.normal('learning_rate', 0.01, 0.9),
-    }
-
-    best = fmin(fn=objective, space=space, algo=tpe.suggest, max_evals=max_evals)
-    print("XGBoost: Hyperopt estimated optimum {}".format(best))
-
-    xg = xgb.XGBClassifier(
-        learning_rate=best['learning_rate'],
-        n_estimators=int(best['n_estimators']),
-        max_depth=int(best['max_depth'])
-    )
-    xg.fit(x_train, y_train)
-    xg_score = xg.score(x_test, y_test)
-    y_predict = xg.predict(x_test)
-    y_true = y_test
-    print('Accuracy of XGBoost: ' + str(xg_score))
-    precision, recall, fscore, none = precision_recall_fscore_support(y_true, y_predict, average='weighted')
-    print('Precision of XGBoost: ' + str(precision))
-    print('Recall of XGBoost: ' + str(recall))
-    print('F1-score of XGBoost: ' + str(fscore))
-    print(classification_report(y_true, y_predict))
-    cm = confusion_matrix(y_true, y_predict)
-    f, ax = plt.subplots(figsize=(5, 5))
-    sns.heatmap(cm, annot=True, linewidth=0.5, linecolor="red", fmt=".0f", ax=ax)
-    plt.xlabel("y_pred")
-    plt.ylabel("y_true")
-    plt.show()
-
-"""## Anomaly-based IDS
-
-### Generate the port-scan datasets for unknown attack detection
-"""
-from imblearn.over_sampling import SMOTE
-from sklearn.decomposition import KernelPCA
-from FCBF_module import FCBFK
-def anomaly_based_ids():
-    # Generate port-scan datasets
-    df = pd.read_csv('https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv')
-
-    df1 = df[df['Label'] != 5]
-    df1['Label'][df1['Label'] > 0] = 1
-    df1.to_csv('CICIDS2017_sample_km_without_portscan.csv', index=0)
-
-    df2 = df[df['Label'] == 5]
-    df2['Label'][df2['Label'] == 5] = 1
-    df2.to_csv('CICIDS2017_sample_km_portscan.csv', index=0)
-
-    # Read the generated datasets
-    df1 = pd.read_csv('CICIDS2017_sample_km_without_portscan.csv')
-    df2 = pd.read_csv('CICIDS2017_sample_km_portscan.csv')
-
-    # Feature engineering (IG)
-    features = df1.drop(['Label'], axis=1).dtypes[df1.dtypes != 'object'].index
-    df1[features] = df1[features].apply(lambda x: (x - x.mean()) / (x.std()))
-    df2[features] = df2[features].apply(lambda x: (x - x.mean()) / (x.std()))
-    df1 = df1.fillna(0)
-    df2 = df2.fillna(0)
-
-    # Combine datasets
-    df2p = df1[df1['Label'] == 0]
-    df2pp = df2p.sample(n=None, frac=1255 / 18225, replace=False, weights=None, random_state=None, axis=0)
-    df2 = pd.concat([df2, df2pp])
-    df = df1.append(df2)
-
-    X = df.drop(['Label'], axis=1).values
-    y = df.iloc[:, -1].values.reshape(-1, 1)
-    y = np.ravel(y)
-
-    # Feature selection by IG
-    from sklearn.feature_selection import mutual_info_classif
-    importances = mutual_info_classif(X, y)
-
-    f_list = sorted(zip(map(lambda x: round(x, 4), importances), features), reverse=True)
-    Sum = 0
-    fs = []
-    for i in range(len(f_list)):
-        Sum += f_list[i][0]
-        fs.append(f_list[i][1])
-        if Sum >= 0.9:
-            break
-
-    X_fs = df[fs].values
-
-    # Feature selection by FCBF
-    fcbf = FCBFK(k=20)
-    X_fss = fcbf.fit_transform(X_fs, y)
-
-    # KPCA
-    kpca = KernelPCA(n_components=10, kernel='rbf')
-    kpca.fit(X_fss, y)
-    X_kpca = kpca.transform(X_fss)
-
-    # Train-test split
-    X_train = X_kpca[:len(df1)]
-    y_train = y[:len(df1)]
-    X_test = X_kpca[len(df1):]
-    y_test = y[len(df1):]
-
-    # SMOTE for class imbalance
-    smote = SMOTE(n_jobs=-1, sampling_strategy={1: 18225})
-    X_train, y_train = smote.fit_resample(X_train, y_train)
-
-    return X_train, y_train, X_test, y_test
-
-"""### Apply the cluster labeling (CL) k-means method"""
-
-from sklearn.cluster import KMeans
-from sklearn.cluster import DBSCAN,MeanShift
-from sklearn.cluster import SpectralClustering,AgglomerativeClustering,AffinityPropagation,Birch,MiniBatchKMeans,MeanShift
-from sklearn.mixture import GaussianMixture, BayesianGaussianMixture
-from sklearn.metrics import classification_report
-from sklearn import metrics
-
-def CL_kmeans(X_train, X_test, y_train, y_test,n,b=100):
-    km_cluster = MiniBatchKMeans(n_clusters=n,batch_size=b)
-    result = km_cluster.fit_predict(X_train)
-    result2 = km_cluster.predict(X_test)
-
-    count=0
-    a=np.zeros(n)
-    b=np.zeros(n)
-    for v in range(0,n):
-        for i in range(0,len(y_train)):
-            if result[i]==v:
-                if y_train[i]==1:
-                    a[v]=a[v]+1
-                else:
-                    b[v]=b[v]+1
-    list1=[]
-    list2=[]
-    for v in range(0,n):
-        if a[v]<=b[v]:
-            list1.append(v)
-        else:
-            list2.append(v)
-    for v in range(0,len(y_test)):
-        if result2[v] in list1:
-            result2[v]=0
-        elif result2[v] in list2:
-            result2[v]=1
-        else:
-            print("-1")
-    print(classification_report(y_test, result2))
-    cm=confusion_matrix(y_test,result2)
-    acc=metrics.accuracy_score(y_test,result2)
-    print(str(acc))
-    print(cm)
-
-CL_kmeans(X_train, X_test, y_train, y_test, 8)
-
-
-"""### Hyperparameter optimization of CL-k-means
-Tune "k"
-"""
-
-#Hyperparameter optimization by BO-GP
-from skopt.space import Real, Integer
-from skopt.utils import use_named_args
-from sklearn import metrics
-
-space  = [Integer(2, 50, name='n_clusters')]
-@use_named_args(space)
-def objective(**params):
-    km_cluster = MiniBatchKMeans(batch_size=100, **params)
-    n=params['n_clusters']
-
-    result = km_cluster.fit_predict(X_train)
-    result2 = km_cluster.predict(X_test)
-
-    count=0
-    a=np.zeros(n)
-    b=np.zeros(n)
-    for v in range(0,n):
-        for i in range(0,len(y_train)):
-            if result[i]==v:
-                if y_train[i]==1:
-                    a[v]=a[v]+1
-                else:
-                    b[v]=b[v]+1
-    list1=[]
-    list2=[]
-    for v in range(0,n):
-        if a[v]<=b[v]:
-            list1.append(v)
-        else:
-            list2.append(v)
-    for v in range(0,len(y_test)):
-        if result2[v] in list1:
-            result2[v]=0
-        elif result2[v] in list2:
-            result2[v]=1
-        else:
-            print("-1")
-    cm=metrics.accuracy_score(y_test,result2)
-    print(str(n)+" "+str(cm))
-    return (1-cm)
-from skopt import gp_minimize
-import time
-t1=time.time()
-res_gp = gp_minimize(objective, space, n_calls=20, random_state=0)
-t2=time.time()
-print(t2-t1)
-print("Best score=%.4f" % (1-res_gp.fun))
-print("""Best parameters: n_clusters=%d""" % (res_gp.x[0]))
-
-#Hyperparameter optimization by BO-TPE
-from hyperopt import hp, fmin, tpe, STATUS_OK, Trials
-from sklearn.model_selection import cross_val_score, StratifiedKFold
-from sklearn.cluster import MiniBatchKMeans
-from sklearn import metrics
-
-def objective(params):
-    params = {
-        'n_clusters': int(params['n_clusters']),
-    }
-    km_cluster = MiniBatchKMeans(batch_size=100, **params)
-    n=params['n_clusters']
-
-    result = km_cluster.fit_predict(X_train)
-    result2 = km_cluster.predict(X_test)
-
-    count=0
-    a=np.zeros(n)
-    b=np.zeros(n)
-    for v in range(0,n):
-        for i in range(0,len(y_train)):
-            if result[i]==v:
-                if y_train[i]==1:
-                    a[v]=a[v]+1
-                else:
-                    b[v]=b[v]+1
-    list1=[]
-    list2=[]
-    for v in range(0,n):
-        if a[v]<=b[v]:
-            list1.append(v)
-        else:
-            list2.append(v)
-    for v in range(0,len(y_test)):
-        if result2[v] in list1:
-            result2[v]=0
-        elif result2[v] in list2:
-            result2[v]=1
-        else:
-            print("-1")
-    score=metrics.accuracy_score(y_test,result2)
-    print(str(params['n_clusters'])+" "+str(score))
-    return {'loss':1-score, 'status': STATUS_OK }
-space = {
-    'n_clusters': hp.quniform('n_clusters', 2, 50, 1),
-}
-
-best = fmin(fn=objective,
-            space=space,
-            algo=tpe.suggest,
-            max_evals=20)
-print("Random Forest: Hyperopt estimated optimum {}".format(best))
-
-CL_kmeans(X_train, X_test, y_train, y_test, 16)
-
-"""### Apply the CL-k-means model with biased classifiers"""
-'''
-# Only a sample code to show the logic. It needs to work on the entire dataset to generate sufficient training samples for biased classifiers
-def Anomaly_IDS(X_train, X_test, y_train, y_test,n,b=100):
-    # CL-kmeans
-    km_cluster = MiniBatchKMeans(n_clusters=n,batch_size=b)
-    result = km_cluster.fit_predict(X_train)
-    result2 = km_cluster.predict(X_test)
-
-    count=0
-    a=np.zeros(n)
-    b=np.zeros(n)
-    for v in range(0,n):
-        for i in range(0,len(y_train)):
-            if result[i]==v:
-                if y_train[i]==1:
-                    a[v]=a[v]+1
-                else:
-                    b[v]=b[v]+1
-    list1=[]
-    list2=[]
-    for v in range(0,n):
-        if a[v]<=b[v]:
-            list1.append(v)
-        else:
-            list2.append(v)
-    for v in range(0,len(y_test)):
-        if result2[v] in list1:
-            result2[v]=0
-        elif result2[v] in list2:
-            result2[v]=1
-        else:
-            print("-1")
-    print(classification_report(y_test, result2))
-    cm=confusion_matrix(y_test,result2)
-    acc=metrics.accuracy_score(y2,result2)
-    print(str(acc))
-    print(cm)
-
-    #Biased classifier construction
-    count=0
-    print(len(y))
-    a=np.zeros(n)
-    b=np.zeros(n)
-    FNL=[]
-    FPL=[]
-    for v in range(0,n):
-        al=[]
-        bl=[]
-        for i in range(0,len(y)):
-            if result[i]==v:
-                if y[i]==1:        #label 1
-                    a[v]=a[v]+1
-                    al.append(i)
-                else:             #label 0
-                    b[v]=b[v]+1
-                    bl.append(i)
-        if a[v]<=b[v]:
-            FNL.extend(al)
-        else:
-            FPL.extend(bl)
-        #print(str(v)+"="+str(a[v]/(a[v]+b[v])))
-
-    dffp=df.iloc[FPL, :]
-    dffn=df.iloc[FNL, :]
-    dfva0=df[df['Label']==0]
-    dfva1=df[df['Label']==1]
-
-    dffpp=dfva1.sample(n=None, frac=len(FPL)/dfva1.shape[0], replace=False, weights=None, random_state=None, axis=0)
-    dffnp=dfva0.sample(n=None, frac=len(FNL)/dfva0.shape[0], replace=False, weights=None, random_state=None, axis=0)
-
-    dffp_f=pd.concat([dffp, dffpp])
-    dffn_f=pd.concat([dffn, dffnp])
-
-    Xp = dffp_f.drop(['Label'],axis=1)
-    yp = dffp_f.iloc[:, -1].values.reshape(-1,1)
-    yp=np.ravel(yp)
-
-    Xn = dffn_f.drop(['Label'],axis=1)
-    yn = dffn_f.iloc[:, -1].values.reshape(-1,1)
-    yn=np.ravel(yn)
-
-    rfp = RandomForestClassifier(random_state = 0)
-    rfp.fit(Xp,yp)
-    rfn = RandomForestClassifier(random_state = 0)
-    rfn.fit(Xn,yn)
-
-    dffnn_f=pd.concat([dffn, dffnp])
-
-    Xnn = dffn_f.drop(['Label'],axis=1)
-    ynn = dffn_f.iloc[:, -1].values.reshape(-1,1)
-    ynn=np.ravel(ynn)
-
-    rfnn = RandomForestClassifier(random_state = 0)
-    rfnn.fit(Xnn,ynn)
-
-    X2p = df2.drop(['Label'],axis=1)
-    y2p = df2.iloc[:, -1].values.reshape(-1,1)
-    y2p=np.ravel(y2p)
-
-    result2 = km_cluster.predict(X2p)
-
-    count=0
-    a=np.zeros(n)
-    b=np.zeros(n)
-    for v in range(0,n):
-        for i in range(0,len(y)):
-            if result[i]==v:
-                if y[i]==1:
-                    a[v]=a[v]+1
-                else:
-                    b[v]=b[v]+1
-    list1=[]
-    list2=[]
-    l1=[]
-    l0=[]
-    for v in range(0,n):
-        if a[v]<=b[v]:
-            list1.append(v)
-        else:
-            list2.append(v)
-    for v in range(0,len(y2p)):
-        if result2[v] in list1:
-            result2[v]=0
-            l0.append(v)
-        elif result2[v] in list2:
-            result2[v]=1
-            l1.append(v)
-        else:
-            print("-1")
-    print(classification_report(y2p, result2))
-    cm=confusion_matrix(y2p,result2)
-    print(cm)
-
-"""95% of the code has been shared, and the remaining 5% is retained for future extension.  
-Thank you for your interest and more details are in the paper.
-"""
-
-'''
+    print("Random Forest: Hyperopt estimated optimum {}".format(best))
+
+    CL_kmeans(X_train, X_test, y_train, y_test, 16)
+
+    """### Apply the CL-k-means model with biased classifiers"""
+    '''
+    # Only a sample code to show the logic. It needs to work on the entire dataset to generate sufficient training samples for biased classifiers
+    def Anomaly_IDS(X_train, X_test, y_train, y_test,n,b=100):
+        # CL-kmeans
+        km_cluster = MiniBatchKMeans(n_clusters=n,batch_size=b)
+        result = km_cluster.fit_predict(X_train)
+        result2 = km_cluster.predict(X_test)
+
+        count=0
+        a=np.zeros(n)
+        b=np.zeros(n)
+        for v in range(0,n):
+            for i in range(0,len(y_train)):
+                if result[i]==v:
+                    if y_train[i]==1:
+                        a[v]=a[v]+1
+                    else:
+                        b[v]=b[v]+1
+        list1=[]
+        list2=[]
+        for v in range(0,n):
+            if a[v]<=b[v]:
+                list1.append(v)
+            else:
+                list2.append(v)
+        for v in range(0,len(y_test)):
+            if result2[v] in list1:
+                result2[v]=0
+            elif result2[v] in list2:
+                result2[v]=1
+            else:
+                print("-1")
+        print(classification_report(y_test, result2))
+        cm=confusion_matrix(y_test,result2)
+        acc=metrics.accuracy_score(y2,result2)
+        print(str(acc))
+        print(cm)
+
+        #Biased classifier construction
+        count=0
+        print(len(y))
+        a=np.zeros(n)
+        b=np.zeros(n)
+        FNL=[]
+        FPL=[]
+        for v in range(0,n):
+            al=[]
+            bl=[]
+            for i in range(0,len(y)):
+                if result[i]==v:
+                    if y[i]==1:        #label 1
+                        a[v]=a[v]+1
+                        al.append(i)
+                    else:             #label 0
+                        b[v]=b[v]+1
+                        bl.append(i)
+            if a[v]<=b[v]:
+                FNL.extend(al)
+            else:
+                FPL.extend(bl)
+            #print(str(v)+"="+str(a[v]/(a[v]+b[v])))
+
+        dffp=df.iloc[FPL, :]
+        dffn=df.iloc[FNL, :]
+        dfva0=df[df['Label']==0]
+        dfva1=df[df['Label']==1]
+
+        dffpp=dfva1.sample(n=None, frac=len(FPL)/dfva1.shape[0], replace=False, weights=None, random_state=None, axis=0)
+        dffnp=dfva0.sample(n=None, frac=len(FNL)/dfva0.shape[0], replace=False, weights=None, random_state=None, axis=0)
+
+        dffp_f=pd.concat([dffp, dffpp])
+        dffn_f=pd.concat([dffn, dffnp])
+
+        Xp = dffp_f.drop(['Label'],axis=1)
+        yp = dffp_f.iloc[:, -1].values.reshape(-1,1)
+        yp=np.ravel(yp)
+
+        Xn = dffn_f.drop(['Label'],axis=1)
+        yn = dffn_f.iloc[:, -1].values.reshape(-1,1)
+        yn=np.ravel(yn)
+
+        rfp = RandomForestClassifier(random_state = 0)
+        rfp.fit(Xp,yp)
+        rfn = RandomForestClassifier(random_state = 0)
+        rfn.fit(Xn,yn)
+
+        dffnn_f=pd.concat([dffn, dffnp])
+
+        Xnn = dffn_f.drop(['Label'],axis=1)
+        ynn = dffn_f.iloc[:, -1].values.reshape(-1,1)
+        ynn=np.ravel(ynn)
+
+        rfnn = RandomForestClassifier(random_state = 0)
+        rfnn.fit(Xnn,ynn)
+
+        X2p = df2.drop(['Label'],axis=1)
+        y2p = df2.iloc[:, -1].values.reshape(-1,1)
+        y2p=np.ravel(y2p)
+
+        result2 = km_cluster.predict(X2p)
+
+        count=0
+        a=np.zeros(n)
+        b=np.zeros(n)
+        for v in range(0,n):
+            for i in range(0,len(y)):
+                if result[i]==v:
+                    if y[i]==1:
+                        a[v]=a[v]+1
+                    else:
+                        b[v]=b[v]+1
+        list1=[]
+        list2=[]
+        l1=[]
+        l0=[]
+        for v in range(0,n):
+            if a[v]<=b[v]:
+                list1.append(v)
+            else:
+                list2.append(v)
+        for v in range(0,len(y2p)):
+            if result2[v] in list1:
+                result2[v]=0
+                l0.append(v)
+            elif result2[v] in list2:
+                result2[v]=1
+                l1.append(v)
+            else:
+                print("-1")
+        print(classification_report(y2p, result2))
+        cm=confusion_matrix(y2p,result2)
+        print(cm)
+
+    """95% of the code has been shared, and the remaining 5% is retained for future extension.  
+    Thank you for your interest and more details are in the paper.
+    """
+
+    '''
+
+if __name__ == '__main__':
+    main()
