@@ -371,7 +371,7 @@ If you want to use this code on other datasets (e.g., CAN-intrusion dataset), ju
 # if __name__ == "__main__":
 #     main()
 
-def main(filename = "https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv",
+def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv", alg_to_run="all",
         lgb_num_leaves=31, lgb_learning_rate=0.1, lgb_n_estimators=100, lgb_max_depth=-1, 
          lgb_min_child_samples=20, lgb_colsample_bytree=1.0, lgb_reg_alpha=0.0, lgb_reg_lambda=0.0,
          xgb_eta=0.3, xgb_num_boost_round=10, xgb_max_depth=6,
