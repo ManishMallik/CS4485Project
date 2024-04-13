@@ -6,6 +6,7 @@ from sqlalchemy import create_engine
 import subprocess
 import tree_based_ids_globecom19
 import lccde_ids_globecom22
+import mth_ids_iotj
 app = Flask(__name__)
 cors = CORS(app)
 
@@ -112,15 +113,52 @@ def getinfo():
             arr.append(dict)
     return arr
 
-@app.route('/Train_LCCDE')
-def train_LCCDE(filename, alg_to_run):
-    if filename == "":
-        filename = "https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv"
-    yp = lccde_ids_globecom22.main(filename=filename, alg_to_run=alg_to_run)
+@app.route('/LCCDE')
+def run_LCCDE(alg_to_run="all",
+        lgb_num_leaves=31, lgb_learning_rate=0.1, lgb_n_estimators=100, lgb_max_depth=-1, 
+         lgb_min_child_samples=20, lgb_colsample_bytree=1.0,
+         xgb_eta=0.3, xgb_n_estimators=10, xgb_max_depth=6,
+         xgb_colsample_bytree=1.0, xgb_min_child_weight=1.0,
+         cb_iterations=100, cb_learning_rate=0.03, cb_depth=6, cb_colsample_bytree=1.0,
+         cb_bootstrap_type='Bayesian', cb_early_stopping_rounds=10):
+    # if filename == "":
+    #     filename = "https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv"
+    accuracy, precision, f1_score = lccde_ids_globecom22.main(lgb_num_leaves=lgb_num_leaves, lgb_learning_rate=lgb_learning_rate, lgb_n_estimators=lgb_n_estimators, lgb_max_depth=lgb_max_depth, 
+         lgb_min_child_samples=lgb_min_child_samples, lgb_colsample_bytree=lgb_colsample_bytree,
+         xgb_eta=xgb_eta, xgb_n_estimators=xgb_n_estimators, xgb_max_depth=xgb_max_depth,
+         xgb_colsample_bytree=xgb_colsample_bytree, xgb_min_child_weight=xgb_min_child_weight,
+         cb_iterations=cb_iterations, cb_learning_rate=cb_learning_rate, cb_depth=cb_depth, cb_colsample_bytree=cb_colsample_bytree, cb_bootstrap_type=cb_bootstrap_type, 
+         cb_early_stopping_rounds=cb_early_stopping_rounds)
+
+@app.route('/TreeBased')
+def run_TreeBased(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimators=100, xgb_colsample_bytree=1, xgb_min_child_weight=1,
+         rf_n_estimators=100, rf_max_depth=None, rf_min_samples_split=2, rf_min_samples_leaf=1, rf_max_features='sqrt', rf_criterion='gini',
+         dt_max_depth=None, dt_min_samples_split=2, dt_min_samples_leaf=1, dt_max_features=None, dt_criterion='gini',
+         et_n_estimators=100, et_max_depth=None, et_min_samples_split=2, et_min_samples_leaf=1, et_max_features='sqrt', et_criterion='gini'):
+    
+    accuracy, precision, f1_score = tree_based_ids_globecom19.main(xgb_learning_rate=xgb_learning_rate, 
+        xgb_max_depth=xgb_max_depth, xgb_n_estimators=xgb_n_estimators, xgb_colsample_bytree=xgb_colsample_bytree, xgb_min_child_weight=xgb_min_child_weight,
+        rf_n_estimators=rf_n_estimators, rf_max_depth=rf_max_depth, rf_min_samples_split=rf_min_samples_split, rf_min_samples_leaf=rf_min_samples_leaf, rf_max_features=rf_max_features, 
+        rf_criterion=rf_criterion, dt_max_depth=dt_max_depth, dt_min_samples_split=dt_min_samples_split, dt_min_samples_leaf=dt_min_samples_leaf, dt_max_features=dt_max_features,
+        dt_criterion=dt_criterion, et_n_estimators=et_n_estimators, et_max_depth=et_max_depth, et_min_samples_split=et_min_samples_split, et_min_samples_leaf=et_min_samples_leaf,
+        et_max_features=et_max_features, et_criterion=et_criterion)
+
+@app.route('/MTH')
+def run_MTH(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimators=100, xgb_colsample_bytree=1, xgb_min_child_weight=1,
+         rf_n_estimators=100, rf_max_depth=None, rf_min_samples_split=2, rf_min_samples_leaf=1, rf_max_features='sqrt', rf_criterion='gini',
+         dt_max_depth=None, dt_min_samples_split=2, dt_min_samples_leaf=1, dt_max_features=None, dt_criterion='gini',
+         et_n_estimators=100, et_max_depth=None, et_min_samples_split=2, et_min_samples_leaf=1, et_max_features='sqrt', et_criterion='gini'):
+    
+    accuracy, precision, f1_score = mth_ids_iotj.main(xgb_learning_rate=xgb_learning_rate, 
+        xgb_max_depth=xgb_max_depth, xgb_n_estimators=xgb_n_estimators, xgb_colsample_bytree=xgb_colsample_bytree, xgb_min_child_weight=xgb_min_child_weight,
+        rf_n_estimators=rf_n_estimators, rf_max_depth=rf_max_depth, rf_min_samples_split=rf_min_samples_split, rf_min_samples_leaf=rf_min_samples_leaf, rf_max_features=rf_max_features, 
+        rf_criterion=rf_criterion, dt_max_depth=dt_max_depth, dt_min_samples_split=dt_min_samples_split, dt_min_samples_leaf=dt_min_samples_leaf, dt_max_features=dt_max_features,
+        dt_criterion=dt_criterion, et_n_estimators=et_n_estimators, et_max_depth=et_max_depth, et_min_samples_split=et_min_samples_split, et_min_samples_leaf=et_min_samples_leaf,
+        et_max_features=et_max_features, et_criterion=et_criterion)
 
 # This is just a test
-@app.route('/LCCDE')
-def run_LCCDE(filename):
+@app.route('/old_LCCDE')
+def train_LCCDE(filename):
     
     # filename = 'CICIDS2017_sample1.csv'
     # filename = 'data/CICIDS2017_sample_km.csv'
@@ -267,8 +305,8 @@ def LCCDE(X_test, y_test, m1, m2, m3):
         yp.append(y_pred) # Save the predicted classes for all tested samples
     return yt, yp
 
-@app.route('/TreeBased')
-def run_TreeBased():
+@app.route('/old_TreeBased')
+def train_TreeBased():
 
     # def run_python_script(script_path):
     #     with open(script_path, 'r') as f:

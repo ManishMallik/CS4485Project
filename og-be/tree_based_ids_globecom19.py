@@ -509,7 +509,7 @@ from xgboost import plot_importance
 from imblearn.over_sampling import SMOTE
 import joblib
 
-def main(xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimators=100, xgb_colsample_bytree=1, xgb_min_child_weight=1,
+def main(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimators=100, xgb_colsample_bytree=1, xgb_min_child_weight=1,
          rf_n_estimators=100, rf_max_depth=None, rf_min_samples_split=2, rf_min_samples_leaf=1, rf_max_features='sqrt', rf_criterion='gini',
          dt_max_depth=None, dt_min_samples_split=2, dt_min_samples_leaf=1, dt_max_features=None, dt_criterion='gini',
          et_n_estimators=100, et_max_depth=None, et_min_samples_split=2, et_min_samples_leaf=1, et_max_features='sqrt', et_criterion='gini'):
@@ -562,6 +562,7 @@ def main(xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimators=100, xgb_colsa
     dt.fit(X_train, y_train)
     dt_score = dt.score(X_test, y_test)
     y_predict = dt.predict(X_test)
+    dt_predict = y_predict
     y_true = y_test
     print('Accuracy of DT: ' + str(dt_score))
     precision, recall, fscore, none = precision_recall_fscore_support(y_true, y_predict, average='weighted')
@@ -581,6 +582,7 @@ def main(xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimators=100, xgb_colsa
     rf.fit(X_train, y_train)
     rf_score = rf.score(X_test, y_test)
     y_predict = rf.predict(X_test)
+    rf_predict = y_predict
     y_true = y_test
     print('Accuracy of RF: ' + str(rf_score))
     precision, recall, fscore, none = precision_recall_fscore_support(y_true, y_predict, average='weighted')
@@ -600,6 +602,7 @@ def main(xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimators=100, xgb_colsa
     et.fit(X_train, y_train)
     et_score = et.score(X_test, y_test)
     y_predict = et.predict(X_test)
+    et_predict = y_predict
     y_true = y_test
     print('Accuracy of ET: ' + str(et_score))
     precision, recall, fscore, none = precision_recall_fscore_support(y_true, y_predict, average='weighted')
@@ -619,6 +622,7 @@ def main(xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimators=100, xgb_colsa
     xg.fit(X_train, y_train)
     xg_score = xg.score(X_test, y_test)
     y_predict = xg.predict(X_test)
+    xg_predict = y_predict
     y_true = y_test
     print('Accuracy of XGBoost: ' + str(xg_score))
     precision, recall, fscore, none = precision_recall_fscore_support(y_true, y_predict, average='weighted')
@@ -632,5 +636,52 @@ def main(xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimators=100, xgb_colsa
     plt.xlabel("y_pred")
     plt.ylabel("y_true")
 
+    if alg_to_run == "decision tree":
+        #print the accuracy, precision, and f1 score of the decision tree model
+        print('Accuracy of DT: ' + str(dt_score))
+        precision, recall, fscore, none = precision_recall_fscore_support(y_true, dt_predict, average='weighted')
+        print('Precision of DT: ' + str(precision))
+        print('F1-score of DT: ' + str(fscore))
+        return dt_score, precision, fscore
+    elif alg_to_run == "random forest":
+        #print the accuracy, precision, and f1 score of the random forest model
+        print('Accuracy of RF: ' + str(rf_score))
+        precision, recall, fscore, none = precision_recall_fscore_support(y_true, rf_predict, average='weighted')
+        print('Precision of RF: ' + str(precision))
+        print('F1-score of RF: ' + str(fscore))
+        return rf_score, precision, fscore
+    elif alg_to_run == "extra trees":
+        #print the accuracy, precision, and f1 score of the extra trees model
+        print('Accuracy of ET: ' + str(et_score))
+        precision, recall, fscore, none = precision_recall_fscore_support(y_true, et_predict, average='weighted')
+        print('Precision of ET: ' + str(precision))
+        print('F1-score of ET: ' + str(fscore))
+        return et_score, precision, fscore
+    elif alg_to_run == "xgboost":
+        #print the accuracy, precision, and f1 score of the xgboost model
+        print('Accuracy of XGBoost: ' + str(xg_score))
+        precision, recall, fscore, none = precision_recall_fscore_support(y_true, xg_predict, average='weighted')
+        print('Precision of XGBoost: ' + str(precision))
+        print('F1-score of XGBoost: ' + str(fscore))
+        return xg_score, precision, fscore
+    else:
+        #find the model with the max accuracy, then print out that model's accuracy, precision, and f1 score
+        model_scores = {"Decision Tree": dt_score, "Random Forest": rf_score, "Extra Trees": et_score, "XGBoost": xg_score}
+        best_model = max(model_scores, key=model_scores.get)
+        print('Best model: ' + best_model)
+        #print the best_model accuracy, recall, and f1 score
+        print('Accuracy of ' + best_model + ': ' + str(model_scores[best_model]))
+        if best_model == "Decision Tree":
+            precision, recall, fscore, none = precision_recall_fscore_support(y_true, dt_predict, average='weighted')
+        elif best_model == "Random Forest":
+            precision, recall, fscore, none = precision_recall_fscore_support(y_true, rf_predict, average='weighted')
+        elif best_model == "Extra Trees":
+            precision, recall, fscore, none = precision_recall_fscore_support(y_true, et_predict, average='weighted')
+        else:
+            precision, recall, fscore, none = precision_recall_fscore_support(y_true, xg_predict, average='weighted')
+        print('Precision of ' + best_model + ': ' + str(precision))
+        print('F1-score of ' + best_model + ': ' + str(fscore))
+        return model_scores[best_model], precision, fscore
+    
 if __name__ == "__main__":
     main()

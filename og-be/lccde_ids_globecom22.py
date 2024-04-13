@@ -371,7 +371,7 @@ If you want to use this code on other datasets (e.g., CAN-intrusion dataset), ju
 # if __name__ == "__main__":
 #     main()
 
-def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv", alg_to_run="all",
+def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv", alg_to_run="catboost",
         lgb_num_leaves=31, lgb_learning_rate=0.1, lgb_n_estimators=100, lgb_max_depth=-1, 
          lgb_min_child_samples=20, lgb_colsample_bytree=1.0, lgb_reg_alpha=0.0, lgb_reg_lambda=0.0,
          xgb_eta=0.3, xgb_n_estimators=10, xgb_max_depth=6,
@@ -422,6 +422,7 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
     print("Average F1 of LightGBM: "+ str(f1_score(y_test, y_pred, average='weighted')))
     print("F1 of LightGBM for each type of attack: "+ str(f1_score(y_test, y_pred, average=None)))
     lg_f1=f1_score(y_test, y_pred, average=None)
+    lg_pred = y_pred
     
     # Plot the confusion matrix
     cm=confusion_matrix(y_test,y_pred)
@@ -449,6 +450,7 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
     print("Average F1 of XGBoost: "+ str(f1_score(y_test, y_pred, average='weighted')))
     print("F1 of XGBoost for each type of attack: "+ str(f1_score(y_test, y_pred, average=None)))
     xg_f1=f1_score(y_test, y_pred, average=None)
+    xg_pred = y_pred
     
     # Plot the confusion matrix
     cm=confusion_matrix(y_test,y_pred)
@@ -476,6 +478,7 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
     print("Average F1 of CatBoost: "+ str(f1_score(y_test, y_pred, average='weighted')))
     print("F1 of CatBoost for each type of attack: "+ str(f1_score(y_test, y_pred, average=None)))
     cb_f1=f1_score(y_test, y_pred, average=None)
+    cb_pred = y_pred
     
     # Plot the confusion matrix
     cm=confusion_matrix(y_test,y_pred)
@@ -484,6 +487,46 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
     plt.xlabel("y_pred")
     plt.ylabel("y_true")
     #plt.show()
+
+    if alg_to_run.lower() == "lightgbm":
+        #print the accuracy score, precision score, and f1 score of lightgbm
+        print("Accuracy of LightGBM: "+ str(accuracy_score(y_test, lg_pred)))
+        print("Precision of LightGBM: "+ str(precision_score(y_test, lg_pred, average='weighted')))
+        print("Average F1 of LightGBM: "+ str(f1_score(y_test, lg_pred, average='weighted')))
+        return str(accuracy_score(y_test, lg_pred)), str(precision_score(y_test, lg_pred, average='weighted')), str(f1_score(y_test, lg_pred, average='weighted'))
+    elif alg_to_run.lower() == "xgboost":
+        #print the accuracy score, precision score, and f1 score of xgboost
+        print("Accuracy of XGBoost: "+ str(accuracy_score(y_test, xg_pred)))
+        print("Precision of XGBoost: "+ str(precision_score(y_test, xg_pred, average='weighted')))
+        print("Average F1 of XGBoost: "+ str(f1_score(y_test, xg_pred, average='weighted')))
+        return str(accuracy_score(y_test, xg_pred)), str(precision_score(y_test, xg_pred, average='weighted')), str(f1_score(y_test, xg_pred, average='weighted'))
+    elif alg_to_run.lower() == "catboost":
+        #print the accuracy score, precision score, and f1 score of catboost
+        print("Accuracy of CatBoost: "+ str(accuracy_score(y_test, cb_pred)))
+        print("Precision of CatBoost: "+ str(precision_score(y_test, cb_pred, average='weighted')))
+        print("Average F1 of CatBoost: "+ str(f1_score(y_test, cb_pred, average='weighted')))
+        return str(accuracy_score(y_test, cb_pred)), str(precision_score(y_test, cb_pred, average='weighted')), str(f1_score(y_test, cb_pred, average='weighted'))
+    else:
+        #find which model has the best accuracy, then print out that model's accuracy, precision, and f1 score
+        lg_acc = accuracy_score(y_test, lg_pred)
+        xg_acc = accuracy_score(y_test, xg_pred)
+        cb_acc = accuracy_score(y_test, cb_pred)
+
+        if lg_acc > xg_acc and lg_acc > cb_acc:
+            print("Accuracy of LightGBM: "+ str(accuracy_score(y_test, lg_pred)))
+            print("Precision of LightGBM: "+ str(precision_score(y_test, lg_pred, average='weighted')))
+            print("Average F1 of LightGBM: "+ str(f1_score(y_test, lg_pred, average='weighted')))
+            return str(accuracy_score(y_test, lg_pred)), str(precision_score(y_test, lg_pred, average='weighted')), str(f1_score(y_test, lg_pred, average='weighted'))
+        elif xg_acc > lg_acc and xg_acc > cb_acc:
+            print("Accuracy of XGBoost: "+ str(accuracy_score(y_test, xg_pred)))
+            print("Precision of XGBoost: "+ str(precision_score(y_test, xg_pred, average='weighted')))
+            print("Average F1 of XGBoost: "+ str(f1_score(y_test, xg_pred, average='weighted')))
+            return str(accuracy_score(y_test, xg_pred)), str(precision_score(y_test, xg_pred, average='weighted')), str(f1_score(y_test, xg_pred, average='weighted'))
+        else:
+            print("Accuracy of CatBoost: "+ str(accuracy_score(y_test, cb_pred)))
+            print("Precision of CatBoost: "+ str(precision_score(y_test, cb_pred, average='weighted')))
+            print("Average F1 of CatBoost: "+ str(f1_score(y_test, cb_pred, average='weighted')))
+            return accuracy_score(y_test, cb_pred), precision_score(y_test, cb_pred, average='weighted'), f1_score(y_test, cb_pred, average='weighted')
 
 if __name__ == "__main__":
     main()
