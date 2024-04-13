@@ -12,11 +12,23 @@ function App() {
   const [selectedData, setSelectedData] = useState(null);
   const [result, setResult] = useState({"benign":0,"bot":0,"bruteforce":0,"dataset":0,"dos":0,"id":0,"infiltration":0,"model":0,"portscan":0,"time":"NULL","webattack":0})
   const [presult, setPresult] = useState({})
+  const [showParamsPopup, setShowParamsPopup] = useState(false);
   const [loaded, setLoaded] = useState(true)
 
   const [compareResultsVisible, setCompareResultsVisible] = useState(false);
   const [comparedResult1, setComparedResult1] = useState({});
   const [comparedResult2, setComparedResult2] = useState({});
+
+  //LCCDE
+  const [earningRate, setEarningRate] = useState('');
+  const [numLeaves, setNumLeaves] = useState('');
+  const [nEstimators, setNEstimators] = useState('');
+  const [maxDepth, setMaxDepth] = useState('');
+  const [colsampleByTree, setColsampleByTree] = useState('');
+  const [minChildSamples, setMinChildSamples] = useState('');
+  const [regLambda, setRegLambda] = useState('');
+  const [regAlpha, setRegAlpha] = useState('');
+  const [subsample, setSubsample] = useState('');
 
   useEffect(()=>{
     setPresult(result)
@@ -44,6 +56,11 @@ function App() {
   const handleButtonClick = (buttonType, value) => {
     if (buttonType === 'model') {
       setSelectedModel(value);
+      if (value === 1 || value === 2 || value === 3) {
+        setShowParamsPopup(true); // Show parameters popup when LCCDE is selected
+      } else {
+        setShowParamsPopup(false); // Hide parameters popup for other models
+      }
     } else if (buttonType === 'data') {
       setSelectedData(value);
     }
@@ -86,6 +103,39 @@ function App() {
     setCompareResultsVisible(false);
   };
 
+  const handleParameterChange = (parameter, value) => {
+    switch (parameter) {
+      case 'earningRate':
+        setEarningRate(value);
+        break;
+      case 'numLeaves':
+        setNumLeaves(value);
+        break;
+      case 'nEstimators':
+        setNEstimators(value);
+        break;
+      case 'maxDepth':
+        setMaxDepth(value);
+        break;
+      case 'colsampleByTree':
+        setColsampleByTree(value);
+        break;
+      case 'minChildSamples':
+        setMinChildSamples(value);
+        break;
+      case 'regLambda':
+        setRegLambda(value);
+        break;
+      case 'regAlpha':
+        setRegAlpha(value);
+        break;
+      case 'subsample':
+        setSubsample(value);
+        break;
+      default:
+        break;
+    }
+  };
 
 
   return (
@@ -109,7 +159,49 @@ function App() {
           >MTH
           </button>
         </div>
+
+        {selectedModel === 1 && (
+          <button className="tweak-params-button" onClick={() => setShowParamsPopup(true)}>
+            Tweak Parameters
+          </button>
+        )}
+
+        {selectedModel === 2 && (
+          <button className="tweak-params-button" onClick={() => setShowParamsPopup(true)}>
+            Tweak Parameters
+          </button>
+        )}
+
+        {selectedModel === 3 && (
+          <button className="tweak-params-button" onClick={() => setShowParamsPopup(true)}>
+            Tweak Parameters
+          </button>
+        )}
+
       </div>
+
+        {/* Pop-up for tweaking parameters */}
+      {showParamsPopup && (
+        <div className="params-bg">
+        <div className="params-popup">
+          {/* Add input fields for parameters */}
+          <h2>Tweak Parameters</h2>
+          <div className="param-input">
+            <label> Earning Rate: </label>
+            <input type="number" id="earningRate" value={earningRate} onChange={(e) => handleParameterChange('earningRate', e.target.value)} />
+          </div>
+          <div className="param-input">
+            <label> Num Leaves: </label>
+            <input type="number" id="numLeaves" value={numLeaves} onChange={(e) => handleParameterChange('numLeaves', e.target.value)} />
+          </div>
+          {/* Close button for the pop-up */}
+          <button className="close-popup-button" onClick={() => setShowParamsPopup(false)}>
+            Close
+          </button>
+        </div>
+        </div>
+      )}
+
       <div className="top-left section">
         <h2>Results</h2>
         <div className="results">
@@ -119,8 +211,11 @@ function App() {
           <div><p>Bot: {result.bot}</p></div>
           <div><p>Infiltration: {result.infiltration}</p></div>
           <div><p>WebAttack: {result.webattack}</p></div>
-          <div className='timeStamp'><p>Time: {result.time}</p></div>
+          {/* /*<div className='timeStamp'><p>Time: {result.time}</p></div> */}
           <div><p>BruteForce: {result.bruteforce}</p></div>
+          <div><p>Accuracy: 0</p></div>
+          <div><p>F1-Score: 0</p></div>
+          <div><p>Precision: 0</p></div>
         </div>
       </div>
       <div className="bottom-right section">

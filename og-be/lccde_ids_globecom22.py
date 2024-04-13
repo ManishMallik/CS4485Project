@@ -371,16 +371,16 @@ If you want to use this code on other datasets (e.g., CAN-intrusion dataset), ju
 # if __name__ == "__main__":
 #     main()
 
-def main(filename = "https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv",
+def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv", alg_to_run="all",
         lgb_num_leaves=31, lgb_learning_rate=0.1, lgb_n_estimators=100, lgb_max_depth=-1, 
          lgb_min_child_samples=20, lgb_colsample_bytree=1.0, lgb_reg_alpha=0.0, lgb_reg_lambda=0.0,
-         xgb_eta=0.3, xgb_num_boost_round=10, xgb_max_depth=6,
-         xgb_colsample_bytree=1.0, xgb_reg_lambda=1.0, xgb_reg_alpha=0.0,
-         cb_iterations=100, cb_learning_rate=0.03, cb_depth=6, cb_l2_leaf_reg=3, cb_colsample_bylevel=1.0, cb_border_count=254,
-         cb_random_strength=1.0, cb_bootstrap_type='Bayesian'):
+         xgb_eta=0.3, xgb_n_estimators=10, xgb_max_depth=6,
+         xgb_colsample_bytree=1.0, xgb_reg_lambda=1.0, xgb_reg_alpha=0.0, xgb_min_child_weight=1.0,
+         cb_iterations=100, cb_learning_rate=0.03, cb_depth=6, cb_l2_leaf_reg=3, cb_colsample_bytree=1.0, cb_border_count=254,
+         cb_random_strength=1.0, cb_bootstrap_type='Bayesian', cb_early_stopping_rounds=10):
 
-    # df = pd.read_csv("https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv")
     df = pd.read_csv("https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv")
+    # df = pd.read_csv("data/CICIDS2017_sample.csv")
     df.Label.value_counts()
 
     # df
@@ -432,8 +432,8 @@ def main(filename = "https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion
     #plt.show()
 
     # Train the XGBoost algorithm
-    xg = xgb.XGBClassifier(eta=xgb_eta, num_boost_round=xgb_num_boost_round,
-                            max_depth=xgb_max_depth, colsample_bytree=xgb_colsample_bytree,
+    xg = xgb.XGBClassifier(eta=xgb_eta, n_estimators=xgb_n_estimators,
+                            max_depth=xgb_max_depth, colsample_bytree=xgb_colsample_bytree, min_child_weight=xgb_min_child_weight,
                             reg_lambda=xgb_reg_lambda, reg_alpha=xgb_reg_alpha)
     
     X_train_x = X_train.values
@@ -461,8 +461,8 @@ def main(filename = "https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion
     # Train the CatBoost algorithm
     print("Initializing catboost")
     cb = cbt.CatBoostClassifier(iterations=cb_iterations, learning_rate=cb_learning_rate, depth=cb_depth,
-                                l2_leaf_reg=cb_l2_leaf_reg, colsample_bylevel=cb_colsample_bylevel, border_count=cb_border_count,
-                                random_strength=cb_random_strength, bootstrap_type=cb_bootstrap_type,
+                                l2_leaf_reg=cb_l2_leaf_reg, colsample_bylevel=cb_colsample_bytree, border_count=cb_border_count,
+                                random_strength=cb_random_strength, bootstrap_type=cb_bootstrap_type, early_stopping_rounds=cb_early_stopping_rounds
                                 )
     print("Training catboost")
     cb.fit(X_train, y_train)
