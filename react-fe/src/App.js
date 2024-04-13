@@ -172,8 +172,6 @@ function App() {
     )}
       </div>
       <div className="bottom-left section">
-        <h2>Compare Past Results</h2>
-        {/* Display past results in a table */}
         <div className="past-results-table">
           <DataTable setCompareResultsVisible={setCompareResultsVisible} selected={selected} setSelected={setSelected} passed_result={presult}></DataTable>
         </div>
