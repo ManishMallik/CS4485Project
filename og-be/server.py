@@ -116,16 +116,12 @@ def getinfo():
 def train_LCCDE(filename, alg_to_run):
     if filename == "":
         filename = "https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv"
-<<<<<<< HEAD
     yp = lccde_ids_globecom22.main(filename, lgb_num_leaves, lgb_learning_rate, lgb_n_estimators, lgb_max_depth, 
          lgb_min_child_samples, lgb_colsample_bytree, lgb_reg_alpha, lgb_reg_lambda,
          xgb_eta=, xgb_num_boost_round, xgb_max_depth,
          xgb_colsample_bytree, xgb_reg_lambda, xgb_reg_alpha,
          cb_iterations, cb_learning_rate, cb_depth, cb_l2_leaf_reg, cb_colsample_bylevel, cb_border_count,
          cb_random_strength, cb_bootstrap_type='Bayesian')
-=======
-    yp = lccde_ids_globecom22.main(filename=filename, alg_to_run=alg_to_run)
->>>>>>> f19534c8007c4baa3e2d25f969f1b9d7102413fd
 
 # This is just a test
 @app.route('/LCCDE')
