@@ -38,7 +38,10 @@ from imblearn.over_sampling import SMOTE
 from hyperopt import hp, fmin, tpe, STATUS_OK, Trials
 import pickle
 
-def main():
+def main(xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimators=100, xgb_colsample_bytree=1, xgb_min_child_weight=1,
+         rf_n_estimators=100, rf_max_depth=None, rf_min_samples_split=2, rf_min_samples_leaf=1, rf_max_features='sqrt', rf_criterion='gini',
+         dt_max_depth=None, dt_min_samples_split=2, dt_min_samples_leaf=1, dt_max_features=None, dt_criterion='gini',
+         et_n_estimators=100, et_max_depth=None, et_min_samples_split=2, et_min_samples_leaf=1, et_max_features='sqrt', et_criterion='gini'):
     pd.__version__
 
     """## Read the sampled CICIDS2017 dataset
@@ -565,7 +568,8 @@ def main():
     #             max_evals=20)
     # print("XGBoost: Hyperopt estimated optimum {}".format(best))
 
-    xg = xgb.XGBClassifier(learning_rate= 0.7340229699980686, n_estimators = 70, max_depth = 14)
+    xg = xgb.XGBClassifier(learning_rate=xgb_learning_rate, max_depth=xgb_max_depth, n_estimators=xgb_n_estimators,
+                           colsample_bytree=xgb_colsample_bytree, min_child_weight=xgb_min_child_weight)
     xg.fit(X_train,y_train)
     xg_score=xg.score(X_test,y_test)
     y_predict=xg.predict(X_test)
@@ -621,7 +625,8 @@ def main():
     #             max_evals=20)
     # print("Random Forest: Hyperopt estimated optimum {}".format(best))
 
-    rf_hpo = RandomForestClassifier(n_estimators = 71, min_samples_leaf = 1, max_depth = 46, min_samples_split = 9, max_features = 20, criterion = 'entropy')
+    rf_hpo = RandomForestClassifier(n_estimators=rf_n_estimators, max_depth=rf_max_depth, min_samples_split=rf_min_samples_split,
+                                 min_samples_leaf=rf_min_samples_leaf, max_features=rf_max_features, criterion=rf_criterion, random_state=0)
     rf_hpo.fit(X_train,y_train)
     rf_score=rf_hpo.score(X_test,y_test)
     y_predict=rf_hpo.predict(X_test)
@@ -675,7 +680,8 @@ def main():
     #             max_evals=50)
     # print("Decision tree: Hyperopt estimated optimum {}".format(best))
 
-    dt_hpo = DecisionTreeClassifier(min_samples_leaf = 2, max_depth = 47, min_samples_split = 3, max_features = 19, criterion = 'gini')
+    dt_hpo = DecisionTreeClassifier(max_depth=dt_max_depth, min_samples_split=dt_min_samples_split, min_samples_leaf=dt_min_samples_leaf,
+                                 max_features=dt_max_features, criterion=dt_criterion, random_state=0)
     dt_hpo.fit(X_train,y_train)
     dt_score=dt_hpo.score(X_test,y_test)
     y_predict=dt_hpo.predict(X_test)
@@ -731,7 +737,8 @@ def main():
     #             max_evals=20)
     # print("Random Forest: Hyperopt estimated optimum {}".format(best))
 
-    et_hpo = ExtraTreesClassifier(n_estimators = 53, min_samples_leaf = 1, max_depth = 31, min_samples_split = 5, max_features = 20, criterion = 'entropy')
+    et_hpo = ExtraTreesClassifier(n_estimators=et_n_estimators, max_depth=et_max_depth, min_samples_split=et_min_samples_split,
+                              min_samples_leaf=et_min_samples_leaf, max_features=et_max_features, criterion=et_criterion, random_state=0)
     et_hpo.fit(X_train,y_train)
     et_score=et_hpo.score(X_test,y_test)
     y_predict=et_hpo.predict(X_test)
