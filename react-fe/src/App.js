@@ -14,6 +14,7 @@ function App() {
   const [presult, setPresult] = useState({})
   const [showParamsPopup, setShowParamsPopup] = useState(false);
   const [loaded, setLoaded] = useState(true)
+  const [selected, setSelected] = useState([])
 
   const [compareResultsVisible, setCompareResultsVisible] = useState(false);
   const [comparedResult1, setComparedResult1] = useState({});
@@ -36,7 +37,6 @@ function App() {
   useEffect(()=>{
     console.log(loaded)
   }, [loaded])
-
 
 
   const handleModelSelect = (model) => {
@@ -90,17 +90,10 @@ function App() {
     // Implement logic to run the algorithm again using the same dataset and model
   };
 
-  
-  const handleCompareResults = () => {
-    // Implement logic to compare past results
-    // For demonstration, let's compare the current result with an empty result
-    setComparedResult1(result);
-    setComparedResult2({});
-    setCompareResultsVisible(true);
-  };
 
   const handleCloseCompareResults = () => {
     setCompareResultsVisible(false);
+    setSelected([])
   };
 
   const handleParameterChange = (parameter, value) => {
@@ -240,20 +233,20 @@ function App() {
         }
       </div>
       <div className="bottom-left section">
-        <h2>Past Results</h2>
+        <h2>Compare Past Results</h2>
         {/* Display past results in a table */}
         <div className="past-results-table">
-          <DataTable passed_result={presult}></DataTable>
+          <DataTable setCompareResultsVisible={setCompareResultsVisible} selected={selected} setSelected={setSelected} passed_result={presult}></DataTable>
         </div>
-        <div className="action-buttons">
-          <button className="button" onClick={handleCompareResults}>Compare</button>
-        </div>
+        {/* <div className="action-buttons"> */}
+          {/* <button className="button" onClick={handleCompareResults}>Compare</button> */}
+        {/* </div> */}
       </div>
 
       {compareResultsVisible && (
         <CompareResultsPopup
-          results1={comparedResult1}
-          results2={comparedResult2}
+          results1={selected[0]}
+          results2={selected[1]}
           onClose={handleCloseCompareResults}
         />
       )}
