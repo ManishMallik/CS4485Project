@@ -112,14 +112,14 @@ def getinfo():
             arr.append(dict)
     return arr
 
-@app.route('/Train_LCCDE')
+@app.route('/LCCDE')
 def train_LCCDE(filename, alg_to_run):
     if filename == "":
         filename = "https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv"
     yp = lccde_ids_globecom22.main(filename=filename, alg_to_run=alg_to_run)
 
 # This is just a test
-@app.route('/LCCDE')
+@app.route('/old_LCCDE')
 def run_LCCDE(filename):
     
     # filename = 'CICIDS2017_sample1.csv'
