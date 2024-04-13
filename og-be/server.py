@@ -28,7 +28,7 @@ import time
 from river import stream
 from statistics import mode
 
-with open('model_list.pkl', 'rb') as f:
+with open('../flask-be/model_list.pkl', 'rb') as f:
     model = pickle.load(f)
 
 #wrapper
@@ -40,6 +40,28 @@ def run_model(model_name, dataset):
     elif model_name == "MTH":
         return {}
     
+@app.route("/compare")
+def compare_runs():
+    f = open(".secrets", "r")
+    secret = f.read().strip()
+    engine = create_engine(f"mysql+pymysql://{secret}@72.182.162.132/IDS")
+    arr = []
+    with engine.connect() as conn:
+        for i in conn.execute(text(f"SELECT DATE_FORMAT(time, '%Y-%m-%d %H:%i:%s') AS time, model, benign, bot, bruteforce, dataset, dos, id, infiltration, portscan, webattack FROM Results WHERE id in ({request.args.get('id1')}, {request.args.get('id2')})")).fetchall():
+            dict = {}
+            dict["time"] = i[0]
+            dict["model"] = i[1]
+            dict["benign"] = i[2]
+            dict["bot"] = i[3]
+            dict["bruteforce"] = i[4]
+            dict["dataset"] = i[5]
+            dict["dos"] = i[6]
+            dict["id"] = i[7]
+            dict["infiltration"] = i[8]
+            dict["portscan"] = i[9]
+            dict["webattack"] = i[10]
+            arr.append(dict)
+    return arr
 
 
 @app.route("/sendinfo")
@@ -63,7 +85,7 @@ def sendinfo():
     output = run_model(model_type, dataset)
 
     # step 3: save the output to the sql database
-    f = open("/home/ash/Projects/CS4485Project/og-be/.secrets", "r")
+    f = open(".secrets", "r")
     secret = f.read().strip()
     engine = create_engine(f"mysql+pymysql://{secret}@72.182.162.132/IDS")
     dict = {}
@@ -91,7 +113,7 @@ def sendinfo():
 @app.route("/getinfo")
 # For past results to query all the previous results
 def getinfo():
-    f = open("/home/ash/Projects/CS4485Project/og-be/.secrets", "r")
+    f = open(".secrets", "r")
     secret = f.read().strip()
     engine = create_engine(f"mysql+pymysql://{secret}@72.182.162.132/IDS")
     arr = []
@@ -118,7 +140,7 @@ def train_LCCDE(filename, alg_to_run):
         filename = "https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv"
     yp = lccde_ids_globecom22.main(filename, lgb_num_leaves, lgb_learning_rate, lgb_n_estimators, lgb_max_depth, 
          lgb_min_child_samples, lgb_colsample_bytree, lgb_reg_alpha, lgb_reg_lambda,
-         xgb_eta=, xgb_num_boost_round, xgb_max_depth,
+         xgb_eta, xgb_num_boost_round, xgb_max_depth,
          xgb_colsample_bytree, xgb_reg_lambda, xgb_reg_alpha,
          cb_iterations, cb_learning_rate, cb_depth, cb_l2_leaf_reg, cb_colsample_bylevel, cb_border_count,
          cb_random_strength, cb_bootstrap_type='Bayesian')
