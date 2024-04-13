@@ -28,7 +28,7 @@ import time
 from river import stream
 from statistics import mode
 
-with open('model_list.pkl', 'rb') as f:
+with open('../flask-be/model_list.pkl', 'rb') as f:
     model = pickle.load(f)
 
 #wrapper
@@ -63,7 +63,7 @@ def sendinfo():
     output = run_model(model_type, dataset)
 
     # step 3: save the output to the sql database
-    f = open("/home/ash/Projects/CS4485Project/og-be/.secrets", "r")
+    f = open(".secrets", "r")
     secret = f.read().strip()
     engine = create_engine(f"mysql+pymysql://{secret}@72.182.162.132/IDS")
     dict = {}
@@ -91,7 +91,7 @@ def sendinfo():
 @app.route("/getinfo")
 # For past results to query all the previous results
 def getinfo():
-    f = open("/home/ash/Projects/CS4485Project/og-be/.secrets", "r")
+    f = open(".secrets", "r")
     secret = f.read().strip()
     engine = create_engine(f"mysql+pymysql://{secret}@72.182.162.132/IDS")
     arr = []
