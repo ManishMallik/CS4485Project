@@ -171,7 +171,7 @@ function EnhancedTableToolbar(props) {
           id="tableTitle"
           component="div"
         >
-          Past Runs
+          Compare Results
         </Typography>
       )}
 
@@ -202,7 +202,7 @@ export default function EnhancedTable(props) {
   // const [selected, setSelected] = React.useState([]);
   const [page, setPage] = React.useState(0);
   const [dense, setDense] = React.useState(true);
-  const [rowsPerPage, setRowsPerPage] = React.useState(2);
+  const [rowsPerPage, setRowsPerPage] = React.useState(7);
   const [rows, setRows] = React.useState([])
   React.useEffect(() =>{
     fetch("http://127.0.0.1:5000/getinfo")

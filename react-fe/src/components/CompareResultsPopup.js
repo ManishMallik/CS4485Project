@@ -7,7 +7,7 @@ tailChase.register("tail-chase")
 const CompareResultsPopup = ({ results1, results2, onClose }) => {
   const [results, setResults] = useState([])
   useEffect(()=>{
-    fetch(`http://localhost:5000/compare?id1=${results1}&id2=${results2}`)
+    fetch(`http://127.0.0.1:5000/compare?id1=${results1}&id2=${results2}`)
     .then((response) => response.json())
     .then((data) => {
       setResults(data);
