@@ -10,40 +10,73 @@ const Tooltip = ({ text }) => (
 
 const TreeBased = () => {
   const [parameters, setParameters] = useState({
-    treebased_xgboost_learning_rate: '',
-    treebased_xgboost_max_depth: '',
-    treebased_xgboost_n_estimators: '',
-    treebased_xgboost_colsample_bytree: '',
-    treebased_xgboost_min_child_weight: '',
+    treebased_xgboost_learning_rate: '0.1',
+    treebased_xgboost_max_depth: '3',
+    treebased_xgboost_n_estimators: '100',
+    treebased_xgboost_colsample_bytree: '1',
+    treebased_xgboost_min_child_weight: '1',
 
-    treebased_rf_n_estimators: '',
-    treebased_rf_max_depth: '',
-    treebased_rf_min_samples_split: '',
-    treebased_rf_min_samples_leaf: '',
-    treebased_rf_max_features: '',
-    treebased_rf_criterion: '',
+    treebased_rf_n_estimators: '100',
+    treebased_rf_max_depth: 'None',
+    treebased_rf_min_samples_split: '2',
+    treebased_rf_min_samples_leaf: '1',
+    treebased_rf_max_features: 'sqrt',
+    treebased_rf_criterion: 'gini',
 
-    treebased_dt_max_depth: '',
-    treebased_dt_min_samples_split: '',
-    treebased_dt_min_samples_leaf: '',
-    treebased_dt_max_features: '',
-    treebased_dt_criterion: '',
+    treebased_dt_max_depth: 'None',
+    treebased_dt_min_samples_split: '2',
+    treebased_dt_min_samples_leaf: '1',
+    treebased_dt_max_features: 'None',
+    treebased_dt_criterion: 'gini',
 
-    treebased_et_n_estimators: '',
-    treebased_et_max_depth: '',
-    treebased_et_min_samples_split: '',
-    treebased_et_min_samples_leaf: '',
-    treebased_et_max_features: '',
-    treebased_et_criterion: '',
+    treebased_et_n_estimators: '100',
+    treebased_et_max_depth: 'None',
+    treebased_et_min_samples_split: '2',
+    treebased_et_min_samples_leaf: '1',
+    treebased_et_max_features: 'sqrt',
+    treebased_et_criterion: 'gini',
 
-    treebased_classifier: '',
+    treebased_classifier: 'all',
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setParameters(prevState => ({
+
+    // Input validation for positive integers
+    if (
+      name.includes('_n_estimators') ||
+      name.includes('_max_depth') ||
+      name.includes('_min_samples_leaf') ||
+      name.includes('_min_child_weight')
+    ) {
+      if (!/^\d+$/.test(value)) {
+        // Not a positive integer, show error
+        alert('Please enter a positive integer.');
+        return;
+      }
+    }
+
+    // Input validation for values between 0 and 1
+    if (name === 'treebased_xgboost_colsample_bytree') {
+      const floatValue = parseFloat(value);
+      if (isNaN(floatValue) || floatValue < 0 || floatValue > 1) {
+        // Not a valid value, show error
+        alert('Please enter a number between 0 and 1.');
+        return;
+      }
+    }
+
+    setParameters((prevState) => ({
       ...prevState,
-      [name]: value
+      [name]: value,
+    }));
+  };
+
+  const handleDropdownChange = (e) => {
+    const { name, value } = e.target;
+    setParameters((prevState) => ({
+      ...prevState,
+      [name]: value,
     }));
   };
 
@@ -180,13 +213,16 @@ const TreeBased = () => {
         treebased_rf_max_features
           <Tooltip text="The number of features to consider when looking for the best split. (Input: a positive integer, a float where 0 < num <= 1, a string [options: ‘sqrt’ or ‘log2’, or None)" />
           :
-          <input
-            type="text"
-            name="treebased_rf_max_features"
-            value={parameters.treebased_rf_max_features}
-            onChange={handleChange}
-            className="parameter-input"
-          />
+          <select
+        name="treebased_rf_max_features"
+        value={parameters.treebased_rf_max_features}
+        onChange={handleChange}
+        className="parameter-input"
+      >
+        <option value="sqrt">sqrt</option>
+        <option value="log2">log2</option>
+        <option value="None">None</option>
+      </select>
         </label>
       </div>
       {/* <div className="parameter">
@@ -251,13 +287,16 @@ const TreeBased = () => {
     treebased_dt_max_features
     <Tooltip text="The number of features to consider when looking for the best split." />
     :
-    <input
-      type="text"
-      name="treebased_dt_max_features"
-      value={parameters.treebased_dt_max_features}
-      onChange={handleChange}
-      className="parameter-input"
-    />
+    <select
+        name="treebased_dt_max_features"
+        value={parameters.treebased_dt_max_features}
+        onChange={handleChange}
+        className="parameter-input"
+      >
+        <option value="sqrt">sqrt</option>
+        <option value="log2">log2</option>
+        <option value="None">None</option>
+      </select>
   </label>
 </div>
 {/* <div className="parameter">
@@ -335,13 +374,16 @@ const TreeBased = () => {
     treebased_et_max_features
     <Tooltip text="The number of features to consider when looking for the best split." />
     :
-    <input
-      type="text"
-      name="treebased_et_max_features"
-      value={parameters.treebased_et_max_features}
-      onChange={handleChange}
-      className="parameter-input"
-    />
+    <select
+        name="treebased_et_max_features"
+        value={parameters.treebased_et_max_features}
+        onChange={handleChange}
+        className="parameter-input"
+      >
+        <option value="sqrt">sqrt</option>
+        <option value="log2">log2</option>
+        <option value="None">None</option>
+      </select>
   </label>
 </div>
 {/* <div className="parameter">
@@ -363,13 +405,18 @@ const TreeBased = () => {
     treebased_classifier
     <Tooltip text="Choose between XGBoost, Random Forest, Decision Tree, Extra Tree, or ALL" />
     :
-    <input
-      type="text"
-      name="treebased_classifier"
-      value={parameters.treebased_classifier}
-      onChange={handleChange}
-      className="parameter-input"
-    />
+    <select
+    name="treebased_classifier"
+    value={parameters.treebased_classifier}
+    onChange={handleDropdownChange}
+    className="parameter-input"
+  >
+            <option value="all">all</option>
+            <option value="xgboost">xgboost</option>
+            <option value="random forest">random forest</option>
+            <option value="decision tree">decision tree</option>
+            <option value="extra tree">decision tree</option>
+  </select>
   </label>
 </div>
     </div>

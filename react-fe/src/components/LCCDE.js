@@ -10,30 +10,59 @@ const Tooltip = ({ text }) => (
 
 const LCCDE = () => {
   const [parameters, setParameters] = useState({
-    lccde_lightgbm_learning_rate: '',
-    lccde_lightgbm_num_leaves: '',
-    lccde_lightgbm_n_estimators: '',
-    lccde_lightgbm_max_depth: '',
-    lccde_lightgbm_colsample_bytree: '',
-    lccde_lightgbm_min_child_samples: '',
+    lccde_lightgbm_learning_rate: '0.1',
+    lccde_lightgbm_num_leaves: '31',
+    lccde_lightgbm_n_estimators: '100',
+    lccde_lightgbm_max_depth: '1',
+    lccde_lightgbm_colsample_bytree: '1.0',
+    lccde_lightgbm_min_child_samples: '20',
 
-    lccde_xgboost_learning_rate: '',
-    lccde_xgboost_max_depth: '',
-    lccde_xgboost_n_estimators: '',
-    lccde_xgboost_colsample_bytree: '',
-    lccde_xgboost_min_child_weight: '',
+    lccde_xgboost_learning_rate: '0.3',
+    lccde_xgboost_max_depth: '6',
+    lccde_xgboost_n_estimators: '10',
+    lccde_xgboost_colsample_bytree: '1.0',
+    lccde_xgboost_min_child_weight: '1.0',
 
-    lccde_catboost_iterations: '',
-    lccde_catboost_learning_rate: '',
-    lccde_catboost_depth: '',
-    lccde_catboost_colsample_bytree: '',
-    lccde_catboost_bootstrap_type: '',
-    lccde_catboost_early_stopping_rounds: '',
+    lccde_catboost_iterations: '100',
+    lccde_catboost_learning_rate: '0.03',
+    lccde_catboost_depth: '6',
+    lccde_catboost_colsample_bytree: '1.0',
+    lccde_catboost_bootstrap_type: 'Bayesian',
+    lccde_catboost_early_stopping_rounds: '10',
 
-    lccde_classifier: ''
+    lccde_classifier: 'all'
   });
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    // Input validation for positive integers
+    if (name.includes('_num_leaves') || name.includes('_n_estimators') || name.includes('_max_depth') ||
+        name.includes('_min_child_samples') || name.includes('_iterations') || name.includes('_depth') ||
+        name.includes('_early_stopping_rounds')) {
+      if (!/^\d+$/.test(value) && value !== "") {
+        // Not a positive integer, show error
+        alert('Please enter a positive integer.');
+        return;
+      }
+    }
+
+    if (name === "lccde_catboost_colsample_bytree") {
+      const floatValue = parseFloat(value);
+      if (value !== "" && (isNaN(floatValue) || floatValue < 0 || floatValue > 1)) {
+        // Not a valid value, show error
+        alert("Please enter a number between 0 and 1.");
+        return;
+      }
+    }
+
+    setParameters(prevState => ({
+      ...prevState,
+      [name]: value
+    }));
+  };
+
+  const handleDropdownChange = (e) => {
     const { name, value } = e.target;
     setParameters(prevState => ({
       ...prevState,
@@ -258,13 +287,17 @@ const LCCDE = () => {
           lccde_catboost_bootstrap_type
           <Tooltip text="This determines what bootstrap method the model will use to learn from data. Different methods affect how well a model learns. (Input: ['Bayesian', 'Bernoulli', 'MVS', 'No'])" />
           :
-          <input
-            type="text"
+          <select
             name="lccde_catboost_bootstrap_type"
             value={parameters.lccde_catboost_bootstrap_type}
-            onChange={handleChange}
+            onChange={handleDropdownChange}
             className="parameter-input"
-          />
+          >
+            <option value="Bayesian">Bayesian</option>
+            <option value="Bernoulli">Bernoulli</option>
+            <option value="MVS">MVS</option>
+            <option value="No">No</option>
+          </select>
         </label>
       </div>
       <div className="parameter">
@@ -286,13 +319,17 @@ const LCCDE = () => {
           lccde_classifier
           <Tooltip text="Choose between lightbgm, xgboost, catboost, or all." />
           :
-          <input
-            type="number"
+          <select
             name="lccde_classifier"
             value={parameters.lccde_classifier}
-            onChange={handleChange}
+            onChange={handleDropdownChange}
             className="parameter-input"
-          />
+          >
+            <option value="all">all</option>
+            <option value="lightbgm">lightbgm</option>
+            <option value="xgboost">xgboost</option>
+            <option value="catboost">catboost</option>
+          </select>
         </label>
       </div>
     </div>

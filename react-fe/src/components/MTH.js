@@ -10,40 +10,73 @@ const Tooltip = ({ text }) => (
 
 const MTH = () => {
   const [parameters, setParameters] = useState({
-    mth_xgboost_learning_rate: '',
-    mth_xgboost_max_depth: '',
-    mth_xgboost_n_estimators: '',
-    mth_xgboost_colsample_bytree: '',
-    mth_xgboost_min_child_weight: '',
+    mth_xgboost_learning_rate: '0.1',
+    mth_xgboost_max_depth: '3',
+    mth_xgboost_n_estimators: '100',
+    mth_xgboost_colsample_bytree: '1',
+    mth_xgboost_min_child_weight: '1',
 
-    mth_rf_n_estimators: '',
-    mth_rf_max_depth: '',
-    mth_rf_min_samples_split: '',
-    mth_rf_min_samples_leaf: '',
-    mth_rf_max_features: '',
-    mth_rf_criterion: '',
+    mth_rf_n_estimators: '100',
+    mth_rf_max_depth: 'None',
+    mth_rf_min_samples_split: '2',
+    mth_rf_min_samples_leaf: '1',
+    mth_rf_max_features: 'sqrt',
+    mth_rf_criterion: 'gini',
 
-    mth_dt_max_depth: '',
-    mth_dt_min_samples_split: '',
-    mth_dt_min_samples_leaf: '',
-    mth_dt_max_features: '',
-    mth_dt_criterion: '',
+    mth_dt_max_depth: 'None',
+    mth_dt_min_samples_split: '2',
+    mth_dt_min_samples_leaf: '1',
+    mth_dt_max_features: 'None',
+    mth_dt_criterion: 'gini',
 
-    mth_et_n_estimators: '',
-    mth_et_max_depth: '',
-    mth_et_min_samples_split: '',
-    mth_et_min_samples_leaf: '',
-    mth_et_max_features: '',
-    mth_et_criterion: '',
+    mth_et_n_estimators: '100',
+    mth_et_max_depth: 'None',
+    mth_et_min_samples_split: '2',
+    mth_et_min_samples_leaf: '1',
+    mth_et_max_features: 'sqrt',
+    mth_et_criterion: 'gini',
 
-    mth_classifier: '',
+    mth_classifier: 'all',
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setParameters(prevState => ({
+
+    // Input validation for positive integers
+    if (
+      name.includes('_n_estimators') ||
+      name.includes('_max_depth') ||
+      name.includes('_min_samples_leaf') ||
+      name.includes('_min_child_weight')
+    ) {
+      if (!/^\d+$/.test(value)) {
+        // Not a positive integer, show error
+        alert('Please enter a positive integer.');
+        return;
+      }
+    }
+
+    // Input validation for values between 0 and 1
+    if (name === 'treebased_xgboost_colsample_bytree') {
+      const floatValue = parseFloat(value);
+      if (isNaN(floatValue) || floatValue < 0 || floatValue > 1) {
+        // Not a valid value, show error
+        alert('Please enter a number between 0 and 1.');
+        return;
+      }
+    }
+
+    setParameters((prevState) => ({
       ...prevState,
-      [name]: value
+      [name]: value,
+    }));
+  };
+
+  const handleDropdownChange = (e) => {
+    const { name, value } = e.target;
+    setParameters((prevState) => ({
+      ...prevState,
+      [name]: value,
     }));
   };
 
@@ -180,13 +213,16 @@ const MTH = () => {
           mth_rf_max_features
           <Tooltip text="The number of features to consider when looking for the best split. (Input: a positive integer)" />
           :
-          <input
-            type="number"
-            name="mth_rf_max_features"
-            value={parameters.mth_rf_max_features}
-            onChange={handleChange}
-            className="parameter-input"
-          />
+          <select
+        name="mth_rf_max_features"
+        value={parameters.mth_rf_max_features}
+        onChange={handleChange}
+        className="parameter-input"
+      >
+        <option value="sqrt">sqrt</option>
+        <option value="log2">log2</option>
+        <option value="None">None</option>
+      </select>
         </label>
       </div>
       {/* <div className="parameter">
@@ -250,13 +286,16 @@ const MTH = () => {
           mth_dt_max_features
           <Tooltip text="The number of features to consider when looking for the best split. (Input: a positive integer)" />
           :
-          <input
-            type="number"
-            name="mth_dt_max_features"
-            value={parameters.mth_dt_max_features}
-            onChange={handleChange}
-            className="parameter-input"
-          />
+          <select
+        name="mth_dt_max_features"
+        value={parameters.mth_dt_max_features}
+        onChange={handleChange}
+        className="parameter-input"
+      >
+        <option value="sqrt">sqrt</option>
+        <option value="log2">log2</option>
+        <option value="None">None</option>
+      </select>
         </label>
       </div>
       {/* <div className="parameter">
@@ -334,13 +373,16 @@ const MTH = () => {
           mth_et_max_features
           <Tooltip text="The number of features to consider when looking for the best split. (Input: a positive integer)" />
           :
-          <input
-            type="number"
-            name="mth_et_max_features"
-            value={parameters.mth_et_max_features}
-            onChange={handleChange}
-            className="parameter-input"
-          />
+          <select
+        name="mth_et_max_features"
+        value={parameters.mth_et_max_features}
+        onChange={handleChange}
+        className="parameter-input"
+      >
+        <option value="sqrt">sqrt</option>
+        <option value="log2">log2</option>
+        <option value="None">None</option>
+      </select>
         </label>
       </div>
       {/* <div className="parameter">
@@ -362,13 +404,18 @@ const MTH = () => {
     mth_classifier
     <Tooltip text="Choose between XGBoost, Random Forest, Decision Tree, Extra Tree, or ALL" />
     :
-    <input
-      type="text"
-      name="mth_classifier"
-      value={parameters.mth_classifier}
-      onChange={handleChange}
-      className="parameter-input"
-    />
+    <select
+            name="mth_classifier"
+            value={parameters.mth_classifier}
+            onChange={handleDropdownChange}
+            className="parameter-input"
+          >
+            <option value="all">all</option>
+            <option value="xgboost">xgboost</option>
+            <option value="random forest">random forest</option>
+            <option value="decision tree">decision tree</option>
+            <option value="extra tree">decision tree</option>
+          </select>
   </label>
 </div>
     </div>
