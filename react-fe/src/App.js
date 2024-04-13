@@ -3,6 +3,9 @@ import './App.css';
 import DataTable from './components/DataTable.js';
 import CompareResultsPopup from './components/CompareResultsPopup.js';
 import LoadingButton from '@mui/lab/LoadingButton';
+import LCCDE from './components/LCCDE.js';
+import TreeBased from './components/TreeBased.js';
+import MTH from './components/MTH.js';
 
 import { bouncy } from 'ldrs'
 bouncy.register('loading-bounce')
@@ -12,23 +15,15 @@ function App() {
   const [selectedData, setSelectedData] = useState(null);
   const [result, setResult] = useState({"benign":0,"bot":0,"bruteforce":0,"dataset":0,"dos":0,"id":0,"infiltration":0,"model":0,"portscan":0,"time":"NULL","webattack":0})
   const [presult, setPresult] = useState({})
-  const [showParamsPopup, setShowParamsPopup] = useState(false);
+  const [showLCCDE, setShowLCCDE] = useState(false);
+  const [showTreeBased, setShowTreeBased] = useState(false);
+  const [showMTH, setShowMTH] = useState(false);
   const [loaded, setLoaded] = useState(true)
 
   const [compareResultsVisible, setCompareResultsVisible] = useState(false);
   const [comparedResult1, setComparedResult1] = useState({});
   const [comparedResult2, setComparedResult2] = useState({});
 
-  //LCCDE
-  const [earningRate, setEarningRate] = useState('');
-  const [numLeaves, setNumLeaves] = useState('');
-  const [nEstimators, setNEstimators] = useState('');
-  const [maxDepth, setMaxDepth] = useState('');
-  const [colsampleByTree, setColsampleByTree] = useState('');
-  const [minChildSamples, setMinChildSamples] = useState('');
-  const [regLambda, setRegLambda] = useState('');
-  const [regAlpha, setRegAlpha] = useState('');
-  const [subsample, setSubsample] = useState('');
 
   useEffect(()=>{
     setPresult(result)
@@ -44,6 +39,32 @@ function App() {
     if (selectedModel == model) {
       setSelectedModel(null);
     }
+    if (model == 1) {
+      setShowLCCDE(true)
+      setSelectedData(1)
+    }
+    else {
+      setShowLCCDE(false)
+    }
+    if (model == 2) {
+      setShowTreeBased(true)
+      setSelectedData(2)
+    }
+    else {
+      setShowTreeBased(false)
+    }
+    if (model == 3) {
+      setShowMTH(true)
+      setSelectedData(2)
+    }
+    else {
+      setShowMTH(false)
+    }
+    if (model == null) {
+      setShowMTH(false)
+      setShowTreeBased(false)
+      setShowLCCDE(false)
+    }
   };
 
   const handleDataSelect = (data) => {
@@ -56,11 +77,6 @@ function App() {
   const handleButtonClick = (buttonType, value) => {
     if (buttonType === 'model') {
       setSelectedModel(value);
-      if (value === 1 || value === 2 || value === 3) {
-        setShowParamsPopup(true); // Show parameters popup when LCCDE is selected
-      } else {
-        setShowParamsPopup(false); // Hide parameters popup for other models
-      }
     } else if (buttonType === 'data') {
       setSelectedData(value);
     }
@@ -103,40 +119,6 @@ function App() {
     setCompareResultsVisible(false);
   };
 
-  const handleParameterChange = (parameter, value) => {
-    switch (parameter) {
-      case 'earningRate':
-        setEarningRate(value);
-        break;
-      case 'numLeaves':
-        setNumLeaves(value);
-        break;
-      case 'nEstimators':
-        setNEstimators(value);
-        break;
-      case 'maxDepth':
-        setMaxDepth(value);
-        break;
-      case 'colsampleByTree':
-        setColsampleByTree(value);
-        break;
-      case 'minChildSamples':
-        setMinChildSamples(value);
-        break;
-      case 'regLambda':
-        setRegLambda(value);
-        break;
-      case 'regAlpha':
-        setRegAlpha(value);
-        break;
-      case 'subsample':
-        setSubsample(value);
-        break;
-      default:
-        break;
-    }
-  };
-
 
   return (
     <div className="App">
@@ -159,48 +141,8 @@ function App() {
           >MTH
           </button>
         </div>
-
-        {selectedModel === 1 && (
-          <button className="tweak-params-button" onClick={() => setShowParamsPopup(true)}>
-            Tweak Parameters
-          </button>
-        )}
-
-        {selectedModel === 2 && (
-          <button className="tweak-params-button" onClick={() => setShowParamsPopup(true)}>
-            Tweak Parameters
-          </button>
-        )}
-
-        {selectedModel === 3 && (
-          <button className="tweak-params-button" onClick={() => setShowParamsPopup(true)}>
-            Tweak Parameters
-          </button>
-        )}
-
       </div>
 
-        {/* Pop-up for tweaking parameters */}
-      {showParamsPopup && (
-        <div className="params-bg">
-        <div className="params-popup">
-          {/* Add input fields for parameters */}
-          <h2>Tweak Parameters</h2>
-          <div className="param-input">
-            <label> Earning Rate: </label>
-            <input type="number" id="earningRate" value={earningRate} onChange={(e) => handleParameterChange('earningRate', e.target.value)} />
-          </div>
-          <div className="param-input">
-            <label> Num Leaves: </label>
-            <input type="number" id="numLeaves" value={numLeaves} onChange={(e) => handleParameterChange('numLeaves', e.target.value)} />
-          </div>
-          {/* Close button for the pop-up */}
-          <button className="close-popup-button" onClick={() => setShowParamsPopup(false)}>
-            Close
-          </button>
-        </div>
-        </div>
-      )}
 
       <div className="top-left section">
         <h2>Results</h2>
@@ -219,25 +161,22 @@ function App() {
         </div>
       </div>
       <div className="bottom-right section">
-        <h2>Choose a Dataset</h2>
-        <div className="data-section">
-          <button 
-          className={selectedData == 1 ? "selected" : "button"}
-          onClick={() => {handleDataSelect(1)}}
-          >CICIDS2017_sample.csv
-          </button>
-          <button 
-          className={selectedData == 2 ? "selected" : "button"}
-          onClick={() => handleDataSelect(2)}
-          >CICIDS2017_sample_km.csv
-          </button>
-        </div>
-        {
-          loaded ? 
-          <button /*done loading*/ variant="outlined" className="runButton button" onClick={handleRunAlgorithm}>Run</button> :
-          <button /*loading*/ variant="outlined" className="runButton button" >{<loading-bounce size="40"></loading-bounce>}</button>
-
-        }
+      <div>
+        {selectedModel === 1 && showLCCDE && (
+        <LCCDE />
+      )}
+        {selectedModel === 2 && showTreeBased && (
+        <TreeBased />
+      )}
+        {selectedModel === 3 && showMTH && (
+        <MTH />
+      )}
+  </div>
+    {selectedModel !== null && (
+      loaded ? 
+        <button /*done loading*/ variant="outlined" className="runButton button" onClick={handleRunAlgorithm}>Run</button> :
+        <button /*loading*/ variant="outlined" className="runButton button" >{<loading-bounce size="40"></loading-bounce>}</button>
+    )}
       </div>
       <div className="bottom-left section">
         <h2>Past Results</h2>
