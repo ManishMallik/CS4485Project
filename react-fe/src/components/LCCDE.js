@@ -99,7 +99,7 @@ const LCCDE = () => {
           />
         </label>
       </div>
-      <div className="parameter">
+      {/* <div className="parameter">
         <label>
           lccde_lightgbm_colsample_bytree
           <Tooltip text="This parameter determines the fraction of features when building each tree. This helps introduce randomness and reduce overfitting. It represents the variety of decision-making features the model considers at each round. More variety can help prevent the model from focusing too much on one type of feature. (Input: A real number between 0 and 1)" />
@@ -126,7 +126,7 @@ const LCCDE = () => {
             className="parameter-input"
           />
         </label>
-      </div>
+      </div> */}
       <div className="parameter">
         <label>
           lccde_xgboost_learning_rate
@@ -169,7 +169,7 @@ const LCCDE = () => {
           />
         </label>
       </div>
-      <div className="parameter">
+      {/* <div className="parameter">
         <label>
           lccde_xgboost_colsample_bytree
           <Tooltip text="This determines the variety of decision-making features the model considers at each round. More variety can help prevent the model from focusing too much on one type of feature. (Input: A real number between 0 and 1)" />
@@ -182,7 +182,7 @@ const LCCDE = () => {
             className="parameter-input"
           />
         </label>
-      </div>
+      </div> */}
       <div className="parameter">
         <label>
           lccde_xgboost_min_child_weight

@@ -91,7 +91,7 @@ const TreeBased = () => {
           />
         </label>
       </div>
-      <div className="parameter">
+      {/* <div className="parameter">
         <label>
         treebased_xgboost_colsample_bytree
           <Tooltip text="This determines the variety of decision-making features the model considers at each round. More variety can help prevent the model from focusing too much on one type of feature. (Input: A real number between 0 and 1)" />
@@ -104,7 +104,7 @@ const TreeBased = () => {
             className="parameter-input"
           />
         </label>
-      </div>
+      </div> */}
       <div className="parameter">
         <label>
         treebased_xgboost_min_child_weight
@@ -147,7 +147,7 @@ const TreeBased = () => {
           />
         </label>
       </div>
-      <div className="parameter">
+      {/* <div className="parameter">
         <label>
         treebased_rf_min_samples_split
           <Tooltip text="This parameter determines the fraction of features when building each tree. This helps introduce randomness and reduce overfitting. (Input: A nonnegative integer)" />
@@ -160,8 +160,8 @@ const TreeBased = () => {
             className="parameter-input"
           />
         </label>
-      </div>
-      <div className="parameter">
+      </div> */}
+      {/* <div className="parameter">
         <label>
         treebased_rf_min_samples_leaf
           <Tooltip text="This parameter sets the minimum number of samples required in a leaf node for the model to use before making decisions. More samples can increase the model’s certainty, but too many can lead to overfitting. (Input: A positive integer)" />
@@ -174,7 +174,7 @@ const TreeBased = () => {
             className="parameter-input"
           />
         </label>
-      </div>
+      </div> */}
       <div className="parameter">
         <label>
         treebased_rf_max_features
@@ -189,7 +189,7 @@ const TreeBased = () => {
           />
         </label>
       </div>
-      <div className="parameter">
+      {/* <div className="parameter">
         <label>
           treebased_rf_criterion
           <Tooltip text="It specifies the function used to measure the quality of a split in Decision Trees, Random Forest, and/or Extra Trees. (Input: “gini” or “entropy”)" />
@@ -202,7 +202,7 @@ const TreeBased = () => {
             className="parameter-input"
           />
         </label>
-      </div>
+      </div> */}
 
       <div className="parameter">
   <label>
@@ -218,7 +218,7 @@ const TreeBased = () => {
     />
   </label>
 </div>
-<div className="parameter">
+{/* <div className="parameter">
   <label>
     treebased_dt_min_samples_split
     <Tooltip text="This parameter determines the fraction of features when building each tree. This helps introduce randomness and reduce overfitting." />
@@ -231,7 +231,7 @@ const TreeBased = () => {
       className="parameter-input"
     />
   </label>
-</div>
+</div> */}
 <div className="parameter">
   <label>
     treebased_dt_min_samples_leaf
@@ -260,7 +260,7 @@ const TreeBased = () => {
     />
   </label>
 </div>
-<div className="parameter">
+{/* <div className="parameter">
   <label>
     treebased_dt_criterion
     <Tooltip text="It specifies the function used to measure the quality of a split in Decision Trees, Random Forest, and/or Extra Trees. (Input: “gini” or “entropy”)" />
@@ -273,7 +273,7 @@ const TreeBased = () => {
       className="parameter-input"
     />
   </label>
-</div>
+</div> */}
 <div className="parameter">
   <label>
     treebased_et_n_estimators
@@ -302,7 +302,7 @@ const TreeBased = () => {
     />
   </label>
 </div>
-<div className="parameter">
+{/* <div className="parameter">
   <label>
     treebased_et_min_samples_split
     <Tooltip text="This parameter determines the fraction of features when building each tree. This helps introduce randomness and reduce overfitting." />
@@ -315,7 +315,7 @@ const TreeBased = () => {
       className="parameter-input"
     />
   </label>
-</div>
+</div> */}
 <div className="parameter">
   <label>
     treebased_et_min_samples_leaf
@@ -344,7 +344,7 @@ const TreeBased = () => {
     />
   </label>
 </div>
-<div className="parameter">
+{/* <div className="parameter">
   <label>
     treebased_et_criterion
     <Tooltip text="It specifies the function used to measure the quality of a split in Decision Trees, Random Forest, and/or Extra Trees. (Input: “gini” or “entropy”)" />
@@ -357,7 +357,7 @@ const TreeBased = () => {
       className="parameter-input"
     />
   </label>
-</div>
+</div> */}
 <div className="parameter">
   <label>
     treebased_classifier
