@@ -20,6 +20,7 @@ function App() {
   const [showMTH, setShowMTH] = useState(false);
   const [loaded, setLoaded] = useState(true)
   const [selected, setSelected] = useState([])
+  
 
   const [compareResultsVisible, setCompareResultsVisible] = useState(false);
   const [comparedResult1, setComparedResult1] = useState({});
@@ -81,7 +82,7 @@ function App() {
       setSelectedData(value);
     }
   };
-
+  
   const handleRunAlgorithm = (m, d) => {
     // Implement logic to run the selected algorithm
     // and update pastResults state
@@ -98,19 +99,18 @@ function App() {
     }
   };
 
-  const handleViewResults = () => {
-    // Implement logic to view the results of the current run
-  };
-
-  const handleRunAgain = () => {
-    // Implement logic to run the algorithm again using the same dataset and model
-  };
-
-
   const handleCloseCompareResults = () => {
     setCompareResultsVisible(false);
     setSelected([])
   };
+
+  const handlePastRun = () => {
+    if (selected[0] != null && selected[1] == null)
+      alert("yay button clicked successfully")
+    else
+      alert("broski u gotta select one")
+  };
+
 
 
   return (
@@ -151,6 +151,7 @@ function App() {
           <div><p>Accuracy: 0</p></div>
           <div><p>F1-Score: 0</p></div>
           <div><p>Precision: 0</p></div>
+          <div><p>Recall: 0</p></div>
         </div>
       </div>
       <div className="bottom-right section">
@@ -175,9 +176,9 @@ function App() {
         <div className="past-results-table">
           <DataTable setCompareResultsVisible={setCompareResultsVisible} selected={selected} setSelected={setSelected} passed_result={presult}></DataTable>
         </div>
-        {/* <div className="action-buttons"> */}
-          {/* <button className="button" onClick={handleCompareResults}>Compare</button> */}
-        {/* </div> */}
+        <div className="runs-button"> 
+          <button className="past" onClick ={handlePastRun}>View Past Run</button> 
+        </div>
       </div>
 
       {compareResultsVisible && (
@@ -187,6 +188,7 @@ function App() {
           onClose={handleCloseCompareResults}
         />
       )}
+
 
     </div>
   );

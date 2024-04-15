@@ -91,8 +91,7 @@
   flex-direction: column;
 }
 
-
-.bottom-left button, .bottom-right button {
+.bottom-right button {
   height: 10%;
   width: 20%;
   /* padding-bottom: 3%; */
@@ -286,4 +285,24 @@ button:hover {
 
 .close-popup-button:hover {
   background-color: #0B344E;
+}
+
+.past {
+  background-color: #77ACA2;
+  color: #E7E0D3;
+  font-weight: bold;
+  border-radius: 10px;
+  border-color: #ffffffa6; 
+  cursor: pointer;
+  font-size: 20px;
+  
+}
+
+.runs-button{
+  display: flex;
+  height: 100%;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  margin: 10px;
 }

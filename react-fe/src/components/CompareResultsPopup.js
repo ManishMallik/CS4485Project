@@ -31,6 +31,10 @@ const CompareResultsPopup = ({ results1, results2, onClose }) => {
                 <div><p>Infiltration: {results[0]["infiltration"]}</p></div>
                 <div><p>WebAttack: {results[0]["webattack"]}</p></div>
                 <div><p>BruteForce: {results[0]["bruteforce"]}</p></div>
+                <div><p>Accuracy: 0</p></div>
+                <div><p>F1-Score: 0</p></div>
+                <div><p>Precision: 0</p></div>
+                <div><p>Recall: 0</p></div>
             </div>
             <div>
               <h3>Result 2</h3>
@@ -42,6 +46,10 @@ const CompareResultsPopup = ({ results1, results2, onClose }) => {
                 <div><p>Infiltration: {results[1]["infiltration"]}</p></div>
                 <div><p>WebAttack: {results[1]["webattack"]}</p></div>
                 <div><p>BruteForce: {results[1]["bruteforce"]}</p></div>
+                <div><p>Accuracy: 0</p></div>
+                <div><p>F1-Score: 0</p></div>
+                <div><p>Precision: 0</p></div>
+                <div><p>Recall: 0</p></div>
             </div>
           </div>
           <button style={{margin: "auto", alignSelf: "center"}} onClick={onClose}>Close</button>
