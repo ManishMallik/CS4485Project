@@ -569,6 +569,7 @@ def main(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimat
     print('Precision of DT: ' + str(precision))
     print('Recall of DT: ' + str(recall))
     print('F1-score of DT: ' + str(fscore))
+    dt_fscore = fscore
     print(classification_report(y_true, y_predict))
     cm = confusion_matrix(y_true, y_predict)
     f, ax = plt.subplots(figsize=(5, 5))
@@ -589,6 +590,7 @@ def main(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimat
     print('Precision of RF: ' + str(precision))
     print('Recall of RF: ' + str(recall))
     print('F1-score of RF: ' + str(fscore))
+    rf_fscore = fscore
     print(classification_report(y_true, y_predict))
     cm = confusion_matrix(y_true, y_predict)
     f, ax = plt.subplots(figsize=(5, 5))
@@ -609,6 +611,7 @@ def main(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimat
     print('Precision of ET: ' + str(precision))
     print('Recall of ET: ' + str(recall))
     print('F1-score of ET: ' + str(fscore))
+    et_fscore = fscore
     print(classification_report(y_true, y_predict))
     cm = confusion_matrix(y_true, y_predict)
     f, ax = plt.subplots(figsize=(5, 5))
@@ -629,6 +632,7 @@ def main(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimat
     print('Precision of XGBoost: ' + str(precision))
     print('Recall of XGBoost: ' + str(recall))
     print('F1-score of XGBoost: ' + str(fscore))
+    xg_fscore = fscore
     print(classification_report(y_true, y_predict))
     cm = confusion_matrix(y_true, y_predict)
     f, ax = plt.subplots(figsize=(5, 5))
@@ -641,47 +645,61 @@ def main(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimat
         print('Accuracy of DT: ' + str(dt_score))
         precision, recall, fscore, none = precision_recall_fscore_support(y_true, dt_predict, average='weighted')
         print('Precision of DT: ' + str(precision))
+        print('Recall of DT: ' + str(recall))
         print('F1-score of DT: ' + str(fscore))
-        return dt_score, precision, fscore
+        return dt_score, precision, recall, fscore
     elif alg_to_run == "random forest":
         #print the accuracy, precision, and f1 score of the random forest model
         print('Accuracy of RF: ' + str(rf_score))
         precision, recall, fscore, none = precision_recall_fscore_support(y_true, rf_predict, average='weighted')
         print('Precision of RF: ' + str(precision))
+        print('Recall of RF: ' + str(recall))
         print('F1-score of RF: ' + str(fscore))
-        return rf_score, precision, fscore
+        return rf_score, precision, recall, fscore
     elif alg_to_run == "extra trees":
         #print the accuracy, precision, and f1 score of the extra trees model
         print('Accuracy of ET: ' + str(et_score))
         precision, recall, fscore, none = precision_recall_fscore_support(y_true, et_predict, average='weighted')
         print('Precision of ET: ' + str(precision))
+        print('Recall of ET: ' + str(recall))
         print('F1-score of ET: ' + str(fscore))
-        return et_score, precision, fscore
+        return et_score, precision, recall, fscore
     elif alg_to_run == "xgboost":
         #print the accuracy, precision, and f1 score of the xgboost model
         print('Accuracy of XGBoost: ' + str(xg_score))
         precision, recall, fscore, none = precision_recall_fscore_support(y_true, xg_predict, average='weighted')
         print('Precision of XGBoost: ' + str(precision))
+        print('Recall of XGBoost: ' + str(recall))
         print('F1-score of XGBoost: ' + str(fscore))
-        return xg_score, precision, fscore
+        return xg_score, precision, recall, fscore
     else:
+
+        # get the model with the max average f1_score
+        model_fscores = {"Decision Tree": dt_fscore, "Random Forest": rf_fscore, "Extra Trees": et_fscore, "XGBoost": xg_fscore}
+        best_model = max(model_fscores, key=model_fscores.get)
+
         #find the model with the max accuracy, then print out that model's accuracy, precision, and f1 score
-        model_scores = {"Decision Tree": dt_score, "Random Forest": rf_score, "Extra Trees": et_score, "XGBoost": xg_score}
-        best_model = max(model_scores, key=model_scores.get)
+        # model_scores = {"Decision Tree": dt_score, "Random Forest": rf_score, "Extra Trees": et_score, "XGBoost": xg_score}
+        # best_model = max(model_scores, key=model_scores.get)
         print('Best model: ' + best_model)
         #print the best_model accuracy, recall, and f1 score
-        print('Accuracy of ' + best_model + ': ' + str(model_scores[best_model]))
         if best_model == "Decision Tree":
+            accuracy = dt_score
             precision, recall, fscore, none = precision_recall_fscore_support(y_true, dt_predict, average='weighted')
         elif best_model == "Random Forest":
+            accuracy = rf_score
             precision, recall, fscore, none = precision_recall_fscore_support(y_true, rf_predict, average='weighted')
         elif best_model == "Extra Trees":
+            accuracy = et_score
             precision, recall, fscore, none = precision_recall_fscore_support(y_true, et_predict, average='weighted')
         else:
+            accuracy = xg_score
             precision, recall, fscore, none = precision_recall_fscore_support(y_true, xg_predict, average='weighted')
+        print('Accuracy of ' + best_model + ': ' + str(accuracy))
         print('Precision of ' + best_model + ': ' + str(precision))
-        print('F1-score of ' + best_model + ': ' + str(fscore))
-        return model_scores[best_model], precision, fscore
+        print('Recall of ' + best_model + ': ' + str(recall))
+        print('F1-score of ' + best_model + ': ' + str(model_fscores[best_model]))
+        return accuracy, precision, recall, model_fscores[best_model]
     
 if __name__ == "__main__":
     main()

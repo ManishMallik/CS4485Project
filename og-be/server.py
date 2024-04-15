@@ -146,7 +146,7 @@ def run_LCCDE(alg_to_run="all",
          cb_bootstrap_type='Bayesian', cb_early_stopping_rounds=10):
     # if filename == "":
     #     filename = "https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv"
-    accuracy, precision, f1_score = lccde_ids_globecom22.main(lgb_num_leaves=lgb_num_leaves, lgb_learning_rate=lgb_learning_rate, lgb_n_estimators=lgb_n_estimators, lgb_max_depth=lgb_max_depth, 
+    accuracy, precision, recall, f1_score = lccde_ids_globecom22.main(lgb_num_leaves=lgb_num_leaves, lgb_learning_rate=lgb_learning_rate, lgb_n_estimators=lgb_n_estimators, lgb_max_depth=lgb_max_depth, 
          lgb_min_child_samples=lgb_min_child_samples, lgb_colsample_bytree=lgb_colsample_bytree,
          xgb_eta=xgb_eta, xgb_n_estimators=xgb_n_estimators, xgb_max_depth=xgb_max_depth,
          xgb_colsample_bytree=xgb_colsample_bytree, xgb_min_child_weight=xgb_min_child_weight,
@@ -159,7 +159,7 @@ def run_TreeBased(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_
          dt_max_depth=None, dt_min_samples_split=2, dt_min_samples_leaf=1, dt_max_features=None, dt_criterion='gini',
          et_n_estimators=100, et_max_depth=None, et_min_samples_split=2, et_min_samples_leaf=1, et_max_features='sqrt', et_criterion='gini'):
     
-    accuracy, precision, f1_score = tree_based_ids_globecom19.main(xgb_learning_rate=xgb_learning_rate, 
+    accuracy, precision, recall, f1_score = tree_based_ids_globecom19.main(xgb_learning_rate=xgb_learning_rate, 
         xgb_max_depth=xgb_max_depth, xgb_n_estimators=xgb_n_estimators, xgb_colsample_bytree=xgb_colsample_bytree, xgb_min_child_weight=xgb_min_child_weight,
         rf_n_estimators=rf_n_estimators, rf_max_depth=rf_max_depth, rf_min_samples_split=rf_min_samples_split, rf_min_samples_leaf=rf_min_samples_leaf, rf_max_features=rf_max_features, 
         rf_criterion=rf_criterion, dt_max_depth=dt_max_depth, dt_min_samples_split=dt_min_samples_split, dt_min_samples_leaf=dt_min_samples_leaf, dt_max_features=dt_max_features,
@@ -172,7 +172,7 @@ def run_MTH(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_esti
          dt_max_depth=None, dt_min_samples_split=2, dt_min_samples_leaf=1, dt_max_features=None, dt_criterion='gini',
          et_n_estimators=100, et_max_depth=None, et_min_samples_split=2, et_min_samples_leaf=1, et_max_features='sqrt', et_criterion='gini'):
     
-    accuracy, precision, f1_score = mth_ids_iotj.main(xgb_learning_rate=xgb_learning_rate, 
+    accuracy, precision, recall, f1_score = mth_ids_iotj.main(xgb_learning_rate=xgb_learning_rate, 
         xgb_max_depth=xgb_max_depth, xgb_n_estimators=xgb_n_estimators, xgb_colsample_bytree=xgb_colsample_bytree, xgb_min_child_weight=xgb_min_child_weight,
         rf_n_estimators=rf_n_estimators, rf_max_depth=rf_max_depth, rf_min_samples_split=rf_min_samples_split, rf_min_samples_leaf=rf_min_samples_leaf, rf_max_features=rf_max_features, 
         rf_criterion=rf_criterion, dt_max_depth=dt_max_depth, dt_min_samples_split=dt_min_samples_split, dt_min_samples_leaf=dt_min_samples_leaf, dt_max_features=dt_max_features,
