@@ -22,15 +22,6 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { visuallyHidden } from '@mui/utils';
 
-function createData(id, time, model, dataset) {
-  return {
-    id,
-    time,
-    model,
-    dataset
-  };
-}
-
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
     return -1;
@@ -77,11 +68,29 @@ const headCells = [
     label: 'Model',
   },
   {
-    id: 'dataset',
+    id: 'f1score',
     numeric: true,
     disablePadding: false,
-    label: 'Dataset',
+    label: 'F1',
   },
+  {
+    id: 'accuracy',
+    numeric: true,
+    disablePadding: false,
+    label: 'Accuracy',
+  },
+  {
+    id: 'precision',
+    numeric: true,
+    disablePadding: false,
+    label: 'Precision',
+  },
+  {
+    id: 'recall',
+    numeric: true,
+    disablePadding: false,
+    label: 'Recall',
+  }
   
 ];
 
@@ -196,6 +205,10 @@ EnhancedTableToolbar.propTypes = {
   numSelected: PropTypes.number.isRequired,
 };
 
+function round(num){
+  return Math.round((num + Number.EPSILON) * 1000000) / 1000000
+}
+
 export default function EnhancedTable(props) {
   const [order, setOrder] = React.useState('desc');
   const [orderBy, setOrderBy] = React.useState('time');
@@ -214,13 +227,13 @@ export default function EnhancedTable(props) {
     .then((res)=>{
       res.forEach(element => {
         let object = {}
-        setRows(oldArray => [...oldArray, {"id": element.id, "time": element.time, "model": element.model, "dataset": element.dataset}])
+        setRows(oldArray => [...oldArray, {"id": element.id, "time": element.time, "model": element.model, "f1score": round(element.f1score), "accuracy": round(element.accuracy), "precision": round(element.precision), "recall": round(element.recall)}])
       });
     })
   }, [props.passed_result])
   React.useEffect(()=>{
     if(props.passed_result.time != "NULL" && props.passed_result.time != null){
-      setRows(oldArray => [{"id": props.passed_result.id, "time": props.passed_result.time, "model": props.passed_result.model, "dataset": props.passed_result.dataset}, ...oldArray])
+      setRows(oldArray => [{"id": props.passed_result.id, "time": props.passed_result.time, "model": props.passed_result.model, "f1score": round(props.passed_result.f1score), "accuracy": round(props.passed_result.accuracy), "precision": round(props.passed_result.precision), "recall": round(props.passed_result.recall)}, ...oldArray])
     }
   }, [props.passed_result])
   React.useEffect(()=>{
@@ -343,7 +356,10 @@ export default function EnhancedTable(props) {
                       {row.time}
                     </TableCell>
                     <TableCell align="right">{row.model}</TableCell>
-                    <TableCell align="right">{row.dataset}</TableCell>
+                    <TableCell align="right">{row.f1score}</TableCell>
+                    <TableCell align="right">{row.accuracy}</TableCell>
+                    <TableCell align="right">{row.precision}</TableCell>
+                    <TableCell align="right">{row.recall}</TableCell>
                   </TableRow>
                 );
               })}

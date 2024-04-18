@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './LCCDE.css'; // Import the CSS file
 
 const Tooltip = ({ text }) => (
@@ -8,38 +8,38 @@ const Tooltip = ({ text }) => (
   </span>
 );
 
-const LCCDE = () => {
+const LCCDE = (props) => {
   const [parameters, setParameters] = useState({
-    lccde_lightgbm_learning_rate: '0.1',
-    lccde_lightgbm_num_leaves: '31',
-    lccde_lightgbm_n_estimators: '100',
-    lccde_lightgbm_max_depth: '1',
-    lccde_lightgbm_colsample_bytree: '1.0',
-    lccde_lightgbm_min_child_samples: '20',
+    lgbm_lr: '0.1',
+    lgbm_leaves: '31',
+    lgbm_n_est: '100',
+    lgbm_depth: '1',
 
-    lccde_xgboost_learning_rate: '0.3',
-    lccde_xgboost_max_depth: '6',
-    lccde_xgboost_n_estimators: '10',
-    lccde_xgboost_colsample_bytree: '1.0',
-    lccde_xgboost_min_child_weight: '1.0',
+    xgb_lr: '0.3',
+    xgb_depth: '6',
+    xgb_n_est: '10',
+    xgb_min_weight: '1.0',
 
-    lccde_catboost_iterations: '100',
-    lccde_catboost_learning_rate: '0.03',
-    lccde_catboost_depth: '6',
-    lccde_catboost_colsample_bytree: '1.0',
-    lccde_catboost_bootstrap_type: 'Bayesian',
-    lccde_catboost_early_stopping_rounds: '10',
+    cat_iter: '100',
+    cat_lr: '0.03',
+    cat_depth: '6',
+    cat_colsample: '1.0',
+    cat_bs: 'Bayesian',
+    cat_stop: '10',
 
-    lccde_classifier: 'all'
+    classifier: 'all'
   });
+  useEffect(()=>{
+    props.setData(parameters)
+  }, [parameters])
 
   const handleChange = (e) => {
     const { name, value } = e.target;
 
     // Input validation for positive integers
-    if (name.includes('_num_leaves') || name.includes('_n_estimators') || name.includes('_max_depth') ||
-        name.includes('_min_child_samples') || name.includes('_iterations') || name.includes('_depth') ||
-        name.includes('_early_stopping_rounds')) {
+    if (name.includes('leaves') || name.includes('_n_est') || name.includes('depth') ||
+        name.includes('_min_child_samples') || name.includes('_iter') || name.includes('_depth') ||
+        name.includes('stop')) {
       if (!/^\d+$/.test(value) && value !== "") {
         // Not a positive integer, show error
         alert('Please enter a positive integer.');
@@ -47,7 +47,7 @@ const LCCDE = () => {
       }
     }
 
-    if (name === "lccde_catboost_colsample_bytree") {
+    if (name === "cat_colsample") {
       const floatValue = parseFloat(value);
       if (value !== "" && (isNaN(floatValue) || floatValue < 0 || floatValue > 1)) {
         // Not a valid value, show error
@@ -79,8 +79,8 @@ const LCCDE = () => {
           :
           <input
             type="number"
-            name="lccde_lightgbm_learning_rate"
-            value={parameters.lccde_lightgbm_learning_rate}
+            name="lgbm_lr"
+            value={parameters.lgbm_lr}
             onChange={handleChange}
             className="parameter-input"
           />
@@ -93,8 +93,8 @@ const LCCDE = () => {
           :
           <input
             type="number"
-            name="lccde_lightgbm_num_leaves"
-            value={parameters.lccde_lightgbm_num_leaves}
+            name="lgbm_leaves"
+            value={parameters.lgbm_leaves}
             onChange={handleChange}
             className="parameter-input"
           />
@@ -107,8 +107,8 @@ const LCCDE = () => {
           :
           <input
             type="number"
-            name="lccde_lightgbm_n_estimators"
-            value={parameters.lccde_lightgbm_n_estimators}
+            name="lgbm_n_est"
+            value={parameters.lgbm_n_est}
             onChange={handleChange}
             className="parameter-input"
           />
@@ -121,8 +121,8 @@ const LCCDE = () => {
           :
           <input
             type="number"
-            name="lccde_lightgbm_max_depth"
-            value={parameters.lccde_lightgbm_max_depth}
+            name="lgbm_depth"
+            value={parameters.lgbm_depth}
             onChange={handleChange}
             className="parameter-input"
           />
@@ -163,8 +163,8 @@ const LCCDE = () => {
           :
           <input
             type="number"
-            name="lccde_xgboost_learning_rate"
-            value={parameters.lccde_xgboost_learning_rate}
+            name="xgb_lr"
+            value={parameters.xgb_lr}
             onChange={handleChange}
             className="parameter-input"
           />
@@ -177,8 +177,8 @@ const LCCDE = () => {
           :
           <input
             type="number"
-            name="lccde_xgboost_max_depth"
-            value={parameters.lccde_xgboost_max_depth}
+            name="xgb_depth"
+            value={parameters.xgb_depth}
             onChange={handleChange}
             className="parameter-input"
           />
@@ -191,8 +191,8 @@ const LCCDE = () => {
           :
           <input
             type="number"
-            name="lccde_xgboost_n_estimators"
-            value={parameters.lccde_xgboost_n_estimators}
+            name="xgb_n_est"
+            value={parameters.xgb_n_est}
             onChange={handleChange}
             className="parameter-input"
           />
@@ -219,8 +219,8 @@ const LCCDE = () => {
           :
           <input
             type="number"
-            name="lccde_xgboost_min_child_weight"
-            value={parameters.lccde_xgboost_min_child_weight}
+            name="xgb_min_weight"
+            value={parameters.xgb_min_weight}
             onChange={handleChange}
             className="parameter-input"
           />
@@ -233,8 +233,8 @@ const LCCDE = () => {
           :
           <input
             type="number"
-            name="lccde_catboost_iterations"
-            value={parameters.lccde_catboost_iterations}
+            name="cat_iter"
+            value={parameters.cat_iter}
             onChange={handleChange}
             className="parameter-input"
           />
@@ -247,8 +247,8 @@ const LCCDE = () => {
           :
           <input
             type="number"
-            name="lccde_catboost_learning_rate"
-            value={parameters.lccde_catboost_learning_rate}
+            name="cat_lr"
+            value={parameters.cat_lr}
             onChange={handleChange}
             className="parameter-input"
           />
@@ -261,8 +261,8 @@ const LCCDE = () => {
           :
           <input
             type="number"
-            name="lccde_catboost_depth"
-            value={parameters.lccde_catboost_depth}
+            name="cat_depth"
+            value={parameters.cat_depth}
             onChange={handleChange}
             className="parameter-input"
           />
@@ -275,8 +275,8 @@ const LCCDE = () => {
           :
           <input
             type="number"
-            name="lccde_catboost_colsample_bytree"
-            value={parameters.lccde_catboost_colsample_bytree}
+            name="cat_colsample"
+            value={parameters.cat_colsample}
             onChange={handleChange}
             className="parameter-input"
           />
@@ -288,8 +288,8 @@ const LCCDE = () => {
           <Tooltip text="This determines what bootstrap method the model will use to learn from data. Different methods affect how well a model learns. (Input: ['Bayesian', 'Bernoulli', 'MVS', 'No'])" />
           :
           <select
-            name="lccde_catboost_bootstrap_type"
-            value={parameters.lccde_catboost_bootstrap_type}
+            name="cat_bs"
+            value={parameters.cat_bs}
             onChange={handleDropdownChange}
             className="parameter-input"
           >
@@ -307,8 +307,8 @@ const LCCDE = () => {
           :
           <input
             type="number"
-            name="lccde_catboost_early_stopping_rounds"
-            value={parameters.lccde_catboost_early_stopping_rounds}
+            name="cat_stop"
+            value={parameters.cat_stop}
             onChange={handleChange}
             className="parameter-input"
           />
@@ -320,8 +320,8 @@ const LCCDE = () => {
           <Tooltip text="Choose between lightbgm, xgboost, catboost, or all." />
           :
           <select
-            name="lccde_classifier"
-            value={parameters.lccde_classifier}
+            name="classifier"
+            value={parameters.classifier}
             onChange={handleDropdownChange}
             className="parameter-input"
           >

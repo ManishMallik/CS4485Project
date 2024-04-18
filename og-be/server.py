@@ -29,17 +29,23 @@ import time
 from river import stream
 from statistics import mode
 
-with open('../flask-be/model_list.pkl', 'rb') as f:
-    model = pickle.load(f)
+app.config['ENV'] = 'development'
+app.config['DEBUG'] = True
 
 #wrapper
-def run_model(model_name, dataset):
-    if model_name == "LCCDE":
-        return run_LCCDE(dataset);
-    elif model_name == "Tree Based":
-        return {}
-    elif model_name == "MTH":
-        return {}
+def run_model(model, request):
+    if model == 1:
+        return run_LCCDE(alg_to_run = request.args["classifier"], lgb_num_leaves = int(request.args["lgbm_leaves"]), lgb_learning_rate = float(request.args["lgbm_lr"]), lgb_n_estimators = int(request.args["lgbm_n_est"]), lgb_max_depth = int(request.args["lgbm_depth"]), xgb_eta = float(request.args["xgb_lr"]), xgb_n_estimators = int(request.args["xgb_n_est"]), xgb_max_depth = int(request.args["xgb_depth"]), xgb_min_child_weight = float(request.args["xgb_min_weight"]), cb_iterations = int(request.args["cat_iter"]), cb_learning_rate = float(request.args["cat_lr"]), cb_depth = int(request.args["cat_depth"]), cb_colsample_bytree = float(request.args["cat_colsample"]), cb_bootstrap_type = request.args["cat_bs"], cb_early_stopping_rounds = int(request.args["cat_stop"]));
+    elif model == 2:
+        return run_TreeBased(alg_to_run = request.args["classifier"], xgb_learning_rate = float(request.args["xgb_lr"]), xgb_max_depth = (None if request.args["xgb_depth"] == "None" else int(request.args["xgb_depth"])), xgb_n_estimators = int(request.args["xgb_n_est"]), xgb_min_child_weight = float(request.args["xgb_min_weight"]), rf_n_estimators = int(request.args["rf_n_est"]), rf_max_depth = (None if request.args["rf_depth"] == "None" else int(request.args["rf_depth"])), rf_max_features = (None if request.args["rf_features"] == "None" else request.args["rf_features"]), dt_max_depth = (None if request.args["dt_depth"] else int(request.args["dt_depth"])), dt_min_samples_leaf = int(request.args["dt_leaf"]), et_n_estimators = int(request.args["et_n_est"]), et_max_depth = (None if request.args["et_depth"] == "None" else int(request.args["et_depth"])), et_min_samples_leaf = int(request.args["et_leaf"]), et_max_features = (None if request.args["et_features"] == "None" else request.args["et_features"]), dt_max_features = (None if request.args["dt_features"] == "None" else request.args["dt_features"]))
+    elif model == 3:
+        return run_MTH(alg_to_run = request.args["classifier"], xgb_learning_rate = float(request.args["xgb_lr"]), xgb_max_depth = (None if request.args["xgb_depth"] == "None" else int(request.args["xgb_depth"])), xgb_n_estimators = int(request.args["xgb_n_est"]), xgb_min_child_weight = float(request.args["xgb_min_weight"]), rf_n_estimators = int(request.args["rf_n_est"]), rf_max_depth = (None if request.args["rf_depth"] == "None" else int(request.args["rf_depth"])), rf_max_features = (None if request.args["rf_features"] == "None" else request.args["rf_features"]), dt_max_depth = (None if request.args["dt_depth"] else int(request.args["dt_depth"])), dt_min_samples_leaf = int(request.args["dt_leaf"]), et_n_estimators = int(request.args["et_n_est"]), et_max_depth = (None if request.args["et_depth"] == "None" else int(request.args["et_depth"])), et_min_samples_leaf = int(request.args["et_leaf"]), et_max_features = (None if request.args["et_features"] == "None" else request.args["et_features"]), dt_max_features = (None if request.args["dt_features"] == "None" else request.args["dt_features"]));
+    # if model == 1:
+    #     return run_LCCDE();
+    # elif model == 2:
+    #     return run_TreeBased()
+    # elif model == 3:
+    #     return run_MTH();
     
 @app.route("/compare")
 def compare_runs():
@@ -48,69 +54,122 @@ def compare_runs():
     engine = create_engine(f"mysql+pymysql://{secret}@72.182.162.132/IDS")
     arr = []
     with engine.connect() as conn:
-        for i in conn.execute(text(f"SELECT DATE_FORMAT(time, '%Y-%m-%d %H:%i:%s') AS time, model, benign, bot, bruteforce, dataset, dos, id, infiltration, portscan, webattack FROM Results WHERE id in ({request.args.get('id1')}, {request.args.get('id2')})")).fetchall():
+        for i in conn.execute(text(f"SELECT DATE_FORMAT(time, '%Y-%m-%d %H:%i:%s') AS time, id, f1score, accuracy, `precision`, recall, model FROM Accuracy WHERE id in ({request.args.get('id1')}, {request.args.get('id2')})")).fetchall():
             dict = {}
             dict["time"] = i[0]
-            dict["model"] = i[1]
-            dict["benign"] = i[2]
-            dict["bot"] = i[3]
-            dict["bruteforce"] = i[4]
-            dict["dataset"] = i[5]
-            dict["dos"] = i[6]
-            dict["id"] = i[7]
-            dict["infiltration"] = i[8]
-            dict["portscan"] = i[9]
-            dict["webattack"] = i[10]
+            dict["id"] = i[1]
+            dict["f1score"] = i[2]
+            dict["accuracy"] = i[3]
+            dict["precision"] = i[4]
+            dict["recall"] = i[5]
+            dict["model"] = i[6]
             arr.append(dict)
     return arr
 
-
-@app.route("/sendinfo")
-def sendinfo():
-    # model_type is {LCCDE, Tree Based, MST} dataset is {non_km, km}
-    # step 1: information parsing
-    model_num = int(request.args.get('model_type'))
-    if model_num == 1:
-        model_type = "LCCDE"
-    elif model_num == 2:
-        model_type = "Tree Based"
-    elif model_num == 3:
-        model_type = "MST"
-    dataset_num = int(request.args.get('dataset'))
-    if dataset_num == 1:
-        dataset = "data/CICIDS2017_sample.csv"
-    elif dataset_num == 2:
-        dataset = "data/CICIDS2017_sample_km.csv"
-
-    # step 2: run the selected model with the selected dataset
-    output = run_model(model_type, dataset)
-
-    # step 3: save the output to the sql database
+@app.route("/pastrun")
+def pastrun():
+    model_num = int(request.args["model"])
+    print(model_num)
     f = open(".secrets", "r")
     secret = f.read().strip()
     engine = create_engine(f"mysql+pymysql://{secret}@72.182.162.132/IDS")
     dict = {}
 
     with engine.connect() as conn:
+        for i in conn.execute(text(f"SELECT * FROM Accuracy WHERE id = {model_num}")).fetchall():
+            dict["id"] = i[0]
+            dict["f1score"] = i[1]
+            dict["accuracy"] = i[2]
+            dict["precision"] = i[3]
+            dict["time"] = i[4]
+            dict["recall"] = i[5]
+            dict["model"] = i[6]
+        print(dict)
+        if int(dict["model"]) == 1:
+            for i in conn.execute(text(f"SELECT * FROM LCCDE_HP WHERE id = {model_num}")).fetchall():
+                dict["lgbm_lr"] = i[0]
+                dict["lgbm_leaves"] = i[1]
+                dict["lgbm_n_est"] = i[2]
+                dict["lgbm_depth"] = i[3]
+                dict["xgb_lr"] = i[4]
+                dict["xgb_depth"] = i[5]
+                dict["xgb_n_est"] = i[6]
+                dict["xgb_min_weight"] = i[7]
+                dict["cat_iter"] = i[8]
+                dict["cat_lr"] = i[9]
+                dict["cat_depth"] = i[10]
+                dict["cat_colsample"] = i[11]
+                dict["cat_bs"] = i[12]
+                dict["cat_stop"] = i[13]
+                dict["classifier"] = i[14]
+        elif int(dict["model"]) == 2:
+            for i in conn.execute(text(f"SELECT * FROM Tree_HP WHERE id = {model_num}")).fetchall():
+                dict["xgb_lr"] = i[0]
+                dict["xgb_depth"] = i[1]
+                dict["xgb_n_est"] = i[2]
+                dict["xgb_min_weight"] = i[3]
+                dict["rf_n_est"] = i[4]
+                dict["rf_depth"] = i[5]
+                dict["rf_features"] = i[6]
+                dict["dt_depth"] = i[7]
+                dict["dt_leaf"] = i[8]
+                dict["dt_features"] = i[9]
+                dict["et_n_est"] = i[10]
+                dict["et_depth"] = i[11]
+                dict["et_leaf"] = i[12]
+                dict["et_features"] = i[13]
+                dict["classifier"] = i[14]
+        elif int(dict["model"]) == 3:
+            for i in conn.execute(text(f"SELECT * FROM MTH_HP WHERE id = {model_num}")).fetchall():
+                dict["xgb_lr"] = i[0]
+                dict["xgb_depth"] = i[1]
+                dict["xgb_n_est"] = i[2]
+                dict["xgb_min_weight"] = i[3]
+                dict["rf_n_est"] = i[4]
+                dict["rf_depth"] = i[5]
+                dict["rf_features"] = i[6]
+                dict["dt_depth"] = i[7]
+                dict["dt_leaf"] = i[8]
+                dict["dt_features"] = i[9]
+                dict["et_n_est"] = i[10]
+                dict["et_depth"] = i[11]
+                dict["et_leaf"] = i[12]
+                dict["et_features"] = i[13]
+                dict["classifier"] = i[14]
+    return dict
+
+@app.route("/runmodel")
+def runmodel():
+    # model_type is {LCCDE, Tree Based, MST} dataset is {non_km, km}
+    # step 1: information parsing
+    model_num = int(request.args.get('model'))
+    # step 2: run the selected model with the selected dataset
+    [accuracy, precision, recall, f1_score] = run_model(model_num, request)
+
+    # # step 3: save the output to the sql database
+    f = open(".secrets", "r")
+    secret = f.read().strip()
+    engine = create_engine(f"mysql+pymysql://{secret}@72.182.162.132/IDS")
+
+    with engine.connect() as conn:
         conn.execute(
-            text(f"INSERT INTO Results (model, benign, dos, portscan, bot, infiltration, webattack, bruteforce, dataset) VALUES ({model_num}, {output['benign']}, {output['dos']}, {output['portscan']}, {output['bot']}, {output['infiltration']}, {output['webattack']}, {output['bruteforce']}, {dataset_num})")
+            text(f"INSERT INTO Accuracy (f1score, accuracy, `precision`, recall, model) VALUES ({f1_score}, {accuracy}, {precision}, {recall}, {model_num})")
         )
         conn.commit()
-        recent = conn.execute(text("SELECT DATE_FORMAT(time, '%Y-%m-%d %H:%i:%s') AS time, model, benign, bot, bruteforce, dataset, dos, id, infiltration, portscan, webattack FROM Results ORDER BY time DESC")).fetchall()[0];
-        dict = {}
-        dict["time"] = recent[0]
-        dict["model"] = recent[1]
-        dict["benign"] = recent[2]
-        dict["bot"] = recent[3]
-        dict["bruteforce"] = recent[4]
-        dict["dataset"] = recent[5]
-        dict["dos"] = recent[6]
-        dict["id"] = recent[7]
-        dict["infiltration"] = recent[8]
-        dict["portscan"] = recent[9]
-        dict["webattack"] = recent[10]
-    # step 4: return the output to the front end
-    return dict
+        if model_num == 1:
+            conn.execute(
+                text(f"INSERT INTO LCCDE_HP VALUES (LAST_INSERT_ID(), {request.args['lgbm_lr']}, {request.args['lgbm_leaves']}, {request.args['lgbm_n_est']}, {request.args['lgbm_depth']}, {request.args['xgb_lr']}, {request.args['xgb_depth']}, {request.args['xgb_n_est']}, {request.args['xgb_min_weight']}, {request.args['cat_iter']}, {request.args['cat_lr']}, {request.args['cat_depth']}, {request.args['cat_colsample']}, '{request.args['cat_bs']}', {request.args['cat_stop']}, '{request.args['classifier']}')")
+            )
+        elif model_num == 2:
+            conn.execute(
+                text(f"INSERT INTO MTH_HP VALUES (LAST_INSERT_ID(), {request.args['xgb_lr']}, {request.args['xgb_depth']}, {request.args['xgb_n_est']}, {request.args['xgb_min_weight']}, {request.args['rf_n_est']}, {0 if request.args['rf_depth'] == 'None' else request.args['rf_depth']}, '{request.args['rf_features']}', {0 if request.args['dt_depth'] == 'None' else request.args['dt_depth']}, {request.args['dt_leaf']}, '{request.args['dt_features']}', {request.args['et_n_est']}, {0 if request.args['et_depth'] == 'None' else request.args['et_depth']}, {request.args['et_leaf']}, '{request.args['et_features']}', '{request.args['classifier']}')")
+            )
+        elif model_num == 3:
+            conn.execute(
+                text(f"INSERT INTO MTH_HP VALUES (LAST_INSERT_ID(), {request.args['xgb_lr']}, {request.args['xgb_depth']}, {request.args['xgb_n_est']}, {request.args['xgb_min_weight']}, {request.args['rf_n_est']}, {0 if request.args['rf_depth'] == 'None' else request.args['rf_depth']}, '{request.args['rf_features']}', {0 if request.args['dt_depth'] == 'None' else request.args['dt_depth']}, {request.args['dt_leaf']}, '{request.args['dt_features']}', {request.args['et_n_est']}, {0 if request.args['et_depth'] == 'None' else request.args['et_depth']}, {request.args['et_leaf']}, '{request.args['et_features']}', '{request.args['classifier']}')")
+            )
+        conn.commit()
+    return {"accuracy": accuracy, "precision": precision, "recall": recall, "f1score": f1_score}
 @app.route("/getinfo")
 # For past results to query all the previous results
 def getinfo():
@@ -119,19 +178,15 @@ def getinfo():
     engine = create_engine(f"mysql+pymysql://{secret}@72.182.162.132/IDS")
     arr = []
     with engine.connect() as conn:
-        for i in conn.execute(text("SELECT * FROM Results")).fetchall():
+        for i in conn.execute(text("SELECT * FROM Accuracy")).fetchall():
             dict = {}
             dict["id"] = i[0]
-            dict["time"] = i[1]
-            dict["model"] = i[2]
-            dict["benign"] = i[3]
-            dict["dos"] = i[4]
-            dict["portscan"] = i[5]
-            dict["bot"] = i[6]
-            dict["infiltration"] = i[7]
-            dict["webattack"] = i[8]
-            dict["bruteforce"] = i[9]
-            dict["dataset"] = i[10]
+            dict["f1score"] = i[1]
+            dict["accuracy"] = i[2]
+            dict["precision"] = i[3]
+            dict["time"] = i[4]
+            dict["recall"] = i[5]
+            dict["model"] = i[6]
             arr.append(dict)
     return arr
 
@@ -152,6 +207,7 @@ def run_LCCDE(alg_to_run="all",
          xgb_colsample_bytree=xgb_colsample_bytree, xgb_min_child_weight=xgb_min_child_weight,
          cb_iterations=cb_iterations, cb_learning_rate=cb_learning_rate, cb_depth=cb_depth, cb_colsample_bytree=cb_colsample_bytree, cb_bootstrap_type=cb_bootstrap_type, 
          cb_early_stopping_rounds=cb_early_stopping_rounds)
+    return [accuracy, precision, recall, f1_score]
 
 @app.route('/TreeBased')
 def run_TreeBased(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimators=100, xgb_colsample_bytree=1, xgb_min_child_weight=1,
@@ -165,6 +221,7 @@ def run_TreeBased(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_
         rf_criterion=rf_criterion, dt_max_depth=dt_max_depth, dt_min_samples_split=dt_min_samples_split, dt_min_samples_leaf=dt_min_samples_leaf, dt_max_features=dt_max_features,
         dt_criterion=dt_criterion, et_n_estimators=et_n_estimators, et_max_depth=et_max_depth, et_min_samples_split=et_min_samples_split, et_min_samples_leaf=et_min_samples_leaf,
         et_max_features=et_max_features, et_criterion=et_criterion)
+    return [accuracy, precision, recall, f1_score]
 
 @app.route('/MTH')
 def run_MTH(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimators=100, xgb_colsample_bytree=1, xgb_min_child_weight=1,
@@ -178,247 +235,7 @@ def run_MTH(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_esti
         rf_criterion=rf_criterion, dt_max_depth=dt_max_depth, dt_min_samples_split=dt_min_samples_split, dt_min_samples_leaf=dt_min_samples_leaf, dt_max_features=dt_max_features,
         dt_criterion=dt_criterion, et_n_estimators=et_n_estimators, et_max_depth=et_max_depth, et_min_samples_split=et_min_samples_split, et_min_samples_leaf=et_min_samples_leaf,
         et_max_features=et_max_features, et_criterion=et_criterion)
-
-
-# This is just a test
-@app.route('/old_LCCDE')
-def train_LCCDE(filename):
-    
-    # filename = 'CICIDS2017_sample1.csv'
-    # filename = 'data/CICIDS2017_sample_km.csv'
-    # Read the uploaded CSV file into a DataFrame
-    print('FILE READ')
-    df = pd.read_csv(filename)
-
-    #m3.keys()
-    # Split DataFrame into features (X) and labels (y)
-    X = df.drop(['Label'], axis=1)
-    y = df['Label']
-
-    # Perform train-test split
-    # X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.95, test_size=0.05, random_state=0)
-    m1 = joblib.load('lgb.pkl')
-    m2 = xgb.XGBClassifier()
-    m2.load_model('xgb_model.model')
-    m3 = CatBoostClassifier()
-    m3.load_model('catboost.json')
-    # Call the LCCDE function with the split data
-    yt, yp = LCCDE(X, y, m1, m2, m3)
-
-    # Calculate performance metrics
-    # accuracy = accuracy_score(yt, yp)
-    # precision = precision_score(yt, yp, average='weighted')
-    # recall = recall_score(yt, yp, average='weighted')
-    # f1_average = f1_score(yt, yp, average='weighted')
-    # f1_per_class = f1_score(yt, yp, average=None)
-
-    predict_dict = {}
-    predict_dict["benign"] = 0
-    predict_dict["bot"] = 0
-    predict_dict["bruteforce"] = 0
-    predict_dict["dos"] = 0
-    predict_dict["infiltration"] = 0
-    predict_dict["portscan"] = 0
-    predict_dict["webattack"] = 0
-
-    for i in yp:
-        if i == 0:
-            predict_dict["benign"] += 1
-        elif i == 1:
-            predict_dict["bot"] += 1
-        elif i == 2:
-            predict_dict["bruteforce"] += 1
-        elif i == 3:
-            predict_dict["dos"] += 1
-        elif i == 4:
-            predict_dict["infiltration"] += 1
-        elif i == 5:
-            predict_dict["portscan"] += 1
-        elif i == 6:
-            predict_dict["webattack"] += 1
-    
-    # Format the output string
-    # output_str = (
-    #     f"Accuracy of LCCDE: {accuracy}\n"
-    #     f"Precision of LCCDE: {precision}\n"
-    #     f"Recall of LCCDE: {recall}\n"
-    #     f"Average F1 of LCCDE: {f1_average}\n"
-    #     f"F1 of LCCDE for each type of attack: {f1_per_class}\n"
-    #     f"Dictionary: {predict_dict}\n"
-    # )
-
-    return predict_dict
-
-# Define your LCCDE function with proper model weights
-def LCCDE(X_test, y_test, m1, m2, m3):
-    # Rest of your function code here...
-    i = 0
-    t = []
-    m = []
-    yt = []
-    yp = []
-    l = []
-    pred_l = []
-    pro_l = []
-
-    print("Running LCCDE")
-
-    # For each class (normal or a type of attack), find the leader model
-    for xi, yi in stream.iter_pandas(X_test, y_test):
-
-        xi2=np.array(list(xi.values()))
-        y_pred1 = m1.predict(xi2.reshape(1, -1))      # model 1 (LightGBM) makes a prediction on text sample xi
-        y_pred1 = int(y_pred1[0])
-        y_pred2 = m2.predict(xi2.reshape(1, -1))      # model 2 (XGBoost) makes a prediction on text sample xi
-        y_pred2 = int(y_pred2[0])
-        y_pred3 = m3.predict(xi2.reshape(1, -1))      # model 3 (Catboost) makes a prediction on text sample xi
-        y_pred3 = int(y_pred3[0])
-
-        p1 = m1.predict_proba(xi2.reshape(1, -1))     # The prediction probability (confidence) list of model 1
-        p2 = m2.predict_proba(xi2.reshape(1, -1))     # The prediction probability (confidence) list of model 2
-        p3 = m3.predict_proba(xi2.reshape(1, -1))     # The prediction probability (confidence) list of model 3
-
-        # Find the highest prediction probability among all classes for each ML model
-        y_pred_p1 = np.max(p1)
-        y_pred_p2 = np.max(p2)
-        y_pred_p3 = np.max(p3)
-
-        if y_pred1 == y_pred2 == y_pred3: # If the predicted classes of all the three models are the same
-            y_pred = y_pred1 # Use this predicted class as the final predicted class
-
-        elif y_pred1 != y_pred2 != y_pred3: # If the predicted classes of all the three models are different
-            # For each prediction model, check if the predicted class’s original ML model is the same as its leader model
-            if model[y_pred1]==m1: # If they are the same and the leading model is model 1 (LightGBM)
-                l.append(m1)
-                pred_l.append(y_pred1) # Save the predicted class
-                pro_l.append(y_pred_p1) # Save the confidence
-
-            if model[y_pred2]==m2: # If they are the same and the leading model is model 2 (XGBoost)
-                l.append(m2)
-                pred_l.append(y_pred2)
-                pro_l.append(y_pred_p2)
-
-            if model[y_pred3]==m3: # If they are the same and the leading model is model 3 (CatBoost)
-                l.append(m3)
-                pred_l.append(y_pred3)
-                pro_l.append(y_pred_p3)
-
-            if len(l)==0: # Avoid empty probability list
-                pro_l=[y_pred_p1,y_pred_p2,y_pred_p3]
-
-            elif len(l)==1: # If only one pair of the original model and the leader model for each predicted class is the same
-                y_pred=pred_l[0] # Use the predicted class of the leader model as the final prediction class
-
-            else: # If no pair or multiple pairs of the original prediction model and the leader model for each predicted class are the same
-                max_p = max(pro_l) # Find the highest confidence
-
-                # Use the predicted class with the highest confidence as the final prediction class
-                if max_p == y_pred_p1:
-                    y_pred = y_pred1
-                elif max_p == y_pred_p2:
-                    y_pred = y_pred2
-                else:
-                    y_pred = y_pred3
-
-        else: # If two predicted classes are the same and the other one is different
-            n = mode([y_pred1,y_pred2,y_pred3]) # Find the predicted class with the majority vote
-            y_pred = model[n].predict(xi2.reshape(1, -1)) # Use the predicted class of the leader model as the final prediction class
-            y_pred = int(y_pred[0])
-
-        yt.append(yi)
-        yp.append(y_pred) # Save the predicted classes for all tested samples
-    return yt, yp
-
-@app.route('/old_TreeBased')
-def train_TreeBased():
-
-    # def run_python_script(script_path):
-    #     with open(script_path, 'r') as f:
-    #         script_code = f.read()
-    #     exec(script_code)
-
-    # run_python_script('tree_based_ids_globecom19.py')
-
-    yp = tree_based_ids_globecom19.main()
-
-    predict_dict = {}
-    predict_dict["benign"] = 0
-    predict_dict["bot"] = 0
-    predict_dict["bruteforce"] = 0
-    predict_dict["dos"] = 0
-    predict_dict["infiltration"] = 0
-    predict_dict["portscan"] = 0
-    predict_dict["webattack"] = 0
-
-    for key, value in yp.items():
-        if key == 0:
-            predict_dict["benign"] = value
-        elif key == 1:
-            predict_dict["bot"] = value
-        elif key == 2:
-            predict_dict["bruteforce"] = value
-        elif key == 3:
-            predict_dict["dos"] = value
-        elif key == 4:
-            predict_dict["infiltration"] = value
-        elif key == 5:
-            predict_dict["portscan"] = value
-        elif key == 6:
-            predict_dict["webattack"] = value
-
-    return predict_dict
-    
-    # filename = 'CICIDS2017_sample1.csv'
-    # df = pd.read_csv(filename)
-
-    # #m3.keys()
-    # # Split DataFrame into features (X) and labels (y)
-    # X = df.drop(['Label'], axis=1)
-    # y = df['Label']
-
-    # # Perform train-test split
-    # X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.95, test_size=0.05, random_state=0)
-
-    # # Load the saved model's weights
-    # loaded_model = xgb.Booster()
-    # loaded_model.load_model('models/stk_model.model')
-
-    # # The loaded model contains a stack model of DecisionTree, XgBoost. Load the DecisionTree from the loaded model
-    # # dt = loaded_model['DecisionTree']
-
-    # # Load the decision tree model
-    # dt = DecisionTreeClassifier(random_state = 0)
-    # dt = joblib.load('models/decision_tree_weights.pkl')
-    # dt.load_model('models/decision_tree_weights.pkl')
-
-    # # Load the random forest classifier
-    # rf = RandomForestClassifier(random_state = 0)
-    # rf = joblib.load('models/random_forest_weights.pkl')
-
-    # # Load the extra tree weights
-    # et = ExtraTreesClassifier(random_state = 0)
-    # et = joblib.load('models/extra_tree_weights.pkl')
-
-    # # Load the xgb
-    # xgb_model = xgb.XGBClassifier()
-    # xgb_model = joblib.load('models/xgb_weights.pkl')
-
-    # # dt_train=dt.predict(X_train)
-    # dt_test=dt.predict(X_test)
-    # # rf_train=rf.predict(X_train)
-    # rf_test=rf.predict(X_test)
-    # # et_train=et.predict(X_train)
-    # et_test=et.predict(X_test)
-    # # xgb_train=xgb_model.predict(X_train)
-    # xgb_test=xgb_model.predict(X_test)
-
-    # # Convert the loaded model to a scikit-learn compatible format for predictions
-    # xgb_sklearn_model = xgb.XGBClassifier()
-    # xgb_sklearn_model._Booster = loaded_model
-
-    # # Make predictions with the loaded model
-    # y_predict_loaded = xgb_sklearn_model.predict(X_test)
-    # print(y_predict_loaded)
+    return [accuracy, precision, recall, f1_score]
 
 if __name__ == "__main__":
     app.run()

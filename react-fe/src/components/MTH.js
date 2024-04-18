@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './MTH.css'; // Import the CSS file
 
 const Tooltip = ({ text }) => (
@@ -8,46 +8,42 @@ const Tooltip = ({ text }) => (
   </span>
 );
 
-const MTH = () => {
+
+const MTH = (props) => {
   const [parameters, setParameters] = useState({
-    mth_xgboost_learning_rate: '0.1',
-    mth_xgboost_max_depth: '3',
-    mth_xgboost_n_estimators: '100',
-    mth_xgboost_colsample_bytree: '1',
-    mth_xgboost_min_child_weight: '1',
-
-    mth_rf_n_estimators: '100',
-    mth_rf_max_depth: 'None',
-    mth_rf_min_samples_split: '2',
-    mth_rf_min_samples_leaf: '1',
-    mth_rf_max_features: 'sqrt',
-    mth_rf_criterion: 'gini',
-
-    mth_dt_max_depth: 'None',
-    mth_dt_min_samples_split: '2',
-    mth_dt_min_samples_leaf: '1',
-    mth_dt_max_features: 'None',
-    mth_dt_criterion: 'gini',
-
-    mth_et_n_estimators: '100',
-    mth_et_max_depth: 'None',
-    mth_et_min_samples_split: '2',
-    mth_et_min_samples_leaf: '1',
-    mth_et_max_features: 'sqrt',
-    mth_et_criterion: 'gini',
-
-    mth_classifier: 'all',
+    xgb_lr: '0.1',
+    xgb_depth: '3',
+    xgb_n_est: '100',
+    xgb_min_weight: '1',
+    
+    rf_n_est: '100',
+    rf_depth: 'None',
+    rf_features: 'sqrt',
+    
+    dt_depth: 'None',
+    dt_leaf: '1',
+    dt_features: 'None',
+    
+    et_n_est: '100',
+    et_depth: 'None',
+    et_leaf: '1',
+    et_features: 'sqrt',
+    
+    classifier: 'all',
   });
+  useEffect(()=>{
+    props.setData(parameters)
+  }, [parameters])
 
   const handleChange = (e) => {
     const { name, value } = e.target;
 
     // Input validation for positive integers
     if (
-      name.includes('_n_estimators') ||
-      name.includes('_max_depth') ||
-      name.includes('_min_samples_leaf') ||
-      name.includes('_min_child_weight')
+      name.includes('_n_est') ||
+      name.includes('depth') ||
+      name.includes('leaf') ||
+      name.includes('_min_weight')
     ) {
       if (!/^\d+$/.test(value)) {
         // Not a positive integer, show error
@@ -89,8 +85,8 @@ const MTH = () => {
           :
           <input
             type="number"
-            name="mth_xgboost_learning_rate"
-            value={parameters.mth_xgboost_learning_rate}
+            name="xgb_lr"
+            value={parameters.xgb_lr}
             onChange={handleChange}
             className="parameter-input"
           />
@@ -103,8 +99,8 @@ const MTH = () => {
           :
           <input
             type="number"
-            name="mth_xgboost_max_depth"
-            value={parameters.mth_xgboost_max_depth}
+            name="xgb_depth"
+            value={parameters.xgb_depth}
             onChange={handleChange}
             className="parameter-input"
           />
@@ -117,8 +113,8 @@ const MTH = () => {
           :
           <input
             type="number"
-            name="mth_xgboost_n_estimators"
-            value={parameters.mth_xgboost_n_estimators}
+            name="xgb_n_est"
+            value={parameters.xgb_n_est}
             onChange={handleChange}
             className="parameter-input"
           />
@@ -145,8 +141,8 @@ const MTH = () => {
           :
           <input
             type="number"
-            name="mth_xgboost_min_child_weight"
-            value={parameters.mth_xgboost_min_child_weight}
+            name="xgb_min_weight"
+            value={parameters.xgb_min_weight}
             onChange={handleChange}
             className="parameter-input"
           />
@@ -159,8 +155,8 @@ const MTH = () => {
           :
           <input
             type="number"
-            name="mth_rf_n_estimators"
-            value={parameters.mth_rf_n_estimators}
+            name="rf_n_est"
+            value={parameters.rf_n_est}
             onChange={handleChange}
             className="parameter-input"
           />
@@ -173,8 +169,8 @@ const MTH = () => {
           :
           <input
             type="number"
-            name="mth_rf_max_depth"
-            value={parameters.mth_rf_max_depth}
+            name="rf_depth"
+            value={parameters.rf_depth}
             onChange={handleChange}
             className="parameter-input"
           />
@@ -214,8 +210,8 @@ const MTH = () => {
           <Tooltip text="The number of features to consider when looking for the best split. (Input: a positive integer)" />
           :
           <select
-        name="mth_rf_max_features"
-        value={parameters.mth_rf_max_features}
+        name="rf_features"
+        value={parameters.rf_features}
         onChange={handleChange}
         className="parameter-input"
       >
@@ -246,8 +242,8 @@ const MTH = () => {
           :
           <input
             type="number"
-            name="mth_dt_max_depth"
-            value={parameters.mth_dt_max_depth}
+            name="dt_depth"
+            value={parameters.dt_depth}
             onChange={handleChange}
             className="parameter-input"
           />
@@ -274,8 +270,8 @@ const MTH = () => {
           :
           <input
             type="number"
-            name="mth_dt_min_samples_leaf"
-            value={parameters.mth_dt_min_samples_leaf}
+            name="dt_leaf"
+            value={parameters.dt_leaf}
             onChange={handleChange}
             className="parameter-input"
           />
@@ -287,8 +283,8 @@ const MTH = () => {
           <Tooltip text="The number of features to consider when looking for the best split. (Input: a positive integer)" />
           :
           <select
-        name="mth_dt_max_features"
-        value={parameters.mth_dt_max_features}
+        name="dt_features"
+        value={parameters.dt_features}
         onChange={handleChange}
         className="parameter-input"
       >
@@ -319,8 +315,8 @@ const MTH = () => {
           :
           <input
             type="number"
-            name="mth_et_n_estimators"
-            value={parameters.mth_et_n_estimators}
+            name="et_n_est"
+            value={parameters.et_n_est}
             onChange={handleChange}
             className="parameter-input"
           />
@@ -333,8 +329,8 @@ const MTH = () => {
           :
           <input
             type="number"
-            name="mth_et_max_depth"
-            value={parameters.mth_et_max_depth}
+            name="et_depth"
+            value={parameters.et_depth}
             onChange={handleChange}
             className="parameter-input"
           />
@@ -361,8 +357,8 @@ const MTH = () => {
           :
           <input
             type="number"
-            name="mth_et_min_samples_leaf"
-            value={parameters.mth_et_min_samples_leaf}
+            name="et_leaf"
+            value={parameters.et_leaf}
             onChange={handleChange}
             className="parameter-input"
           />
@@ -374,8 +370,8 @@ const MTH = () => {
           <Tooltip text="The number of features to consider when looking for the best split. (Input: a positive integer)" />
           :
           <select
-        name="mth_et_max_features"
-        value={parameters.mth_et_max_features}
+        name="et_features"
+        value={parameters.et_features}
         onChange={handleChange}
         className="parameter-input"
       >
@@ -405,8 +401,8 @@ const MTH = () => {
     <Tooltip text="Choose between XGBoost, Random Forest, Decision Tree, Extra Tree, or ALL" />
     :
     <select
-            name="mth_classifier"
-            value={parameters.mth_classifier}
+            name="classifier"
+            value={parameters.classifier}
             onChange={handleDropdownChange}
             className="parameter-input"
           >

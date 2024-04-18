@@ -24,32 +24,20 @@ const CompareResultsPopup = ({ results1, results2, onClose }) => {
             <div>
               <h3>Result 1</h3>
                 <div className='timeStamp'><p>Time: {results[0]["time"]}</p></div>
-                <div><p>BENIGN: {results[0]["benign"]}</p></div>
-                <div><p>DoS: {results[0]["dos"]}</p></div>
-                <div><p>PortScan: {results[0]["portscan"]}</p></div>
-                <div><p>Bot: {results[0]["bot"]}</p></div>
-                <div><p>Infiltration: {results[0]["infiltration"]}</p></div>
-                <div><p>WebAttack: {results[0]["webattack"]}</p></div>
-                <div><p>BruteForce: {results[0]["bruteforce"]}</p></div>
-                <div><p>Accuracy: 0</p></div>
-                <div><p>F1-Score: 0</p></div>
-                <div><p>Precision: 0</p></div>
-                <div><p>Recall: 0</p></div>
+                <div><p>Model: {results[0]["model"]}</p></div>
+                <div><p>Accuracy: {results[0]["accuracy"]}</p></div>
+                <div><p>F1-Score: {results[0]["f1score"]}</p></div>
+                <div><p>Precision: {results[0]["precision"]}</p></div>
+                <div><p>Recall: {results[0]["recall"]}</p></div>
             </div>
             <div>
               <h3>Result 2</h3>
                 <div className='timeStamp'><p>Time: {results[1]["time"]}</p></div>
-                <div><p>BENIGN: {results[1]["benign"]}</p></div>
-                <div><p>DoS: {results[1]["dos"]}</p></div>
-                <div><p>PortScan: {results[1]["portscan"]}</p></div>
-                <div><p>Bot: {results[1]["bot"]}</p></div>
-                <div><p>Infiltration: {results[1]["infiltration"]}</p></div>
-                <div><p>WebAttack: {results[1]["webattack"]}</p></div>
-                <div><p>BruteForce: {results[1]["bruteforce"]}</p></div>
-                <div><p>Accuracy: 0</p></div>
-                <div><p>F1-Score: 0</p></div>
-                <div><p>Precision: 0</p></div>
-                <div><p>Recall: 0</p></div>
+                <div><p>Model: {results[1]["model"]}</p></div>
+                <div><p>Accuracy: {results[1]["accuracy"]}</p></div>
+                <div><p>F1-Score: {results[1]["f1score"]}</p></div>
+                <div><p>Precision: {results[1]["precision"]}</p></div>
+                <div><p>Recall: {results[1]["recall"]}</p></div>
             </div>
           </div>
           <button style={{margin: "auto", alignSelf: "center"}} onClick={onClose}>Close</button>
