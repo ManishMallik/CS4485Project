@@ -409,7 +409,7 @@ const TreeBased = (props) => {
             <option value="xgboost">xgboost</option>
             <option value="random forest">random forest</option>
             <option value="decision tree">decision tree</option>
-            <option value="extra tree">extra tree</option>
+            <option value="extra trees">extra tree</option>
   </select>
   </label>
 </div>
