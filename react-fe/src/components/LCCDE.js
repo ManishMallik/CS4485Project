@@ -326,7 +326,7 @@ const LCCDE = (props) => {
             className="parameter-input"
           >
             <option value="all">all</option>
-            <option value="lightbgm">lightbgm</option>
+            <option value="lightgbm">lightgbm</option>
             <option value="xgboost">xgboost</option>
             <option value="catboost">catboost</option>
           </select>
