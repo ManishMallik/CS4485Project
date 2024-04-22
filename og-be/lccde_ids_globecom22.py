@@ -378,13 +378,26 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
          xgb_colsample_bytree=1.0, xgb_reg_lambda=1.0, xgb_reg_alpha=0.0, xgb_min_child_weight=1.0,
          cb_iterations=100, cb_learning_rate=0.03, cb_depth=6, cb_l2_leaf_reg=3, cb_colsample_bytree=1.0, cb_border_count=254,
          cb_random_strength=1.0, cb_bootstrap_type='Bayesian', cb_early_stopping_rounds=10):
+    
+    if filename == "https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv":
+        df = pd.read_csv("https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv")
+        # df = pd.read_csv("data/CICIDS2017_sample.csv")
+        df.Label.value_counts()
+    
+    elif filename == "https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample.csv":
+        df = pd.read_csv("https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample.csv")
+        # One Hot Encoding
+        # Define a mapping of labels to number IDs
+        label_mapping = {'BENIGN': 0, 'DoS': 3, 'WebAttack': 6, 'Bot': 1, 'PortScan': 5,
+                        'BruteForce': 2, 'Infiltration': 4}
 
-    df = pd.read_csv("https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv")
-    # df = pd.read_csv("data/CICIDS2017_sample.csv")
-    df.Label.value_counts()
+        # Replace labels in the 'Label' column with number IDs
+        df['Label'] = df['Label'].replace(label_mapping)
 
     # df
-    df.count()
+    pd.set_option('mode.use_inf_as_na', True)
+
+    df = df.dropna(axis=0, how='any')
 
     print(df.columns)
 
@@ -397,8 +410,26 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
     """## SMOTE to solve class-imbalance"""
 
     pd.Series(y_train).value_counts()
+    # Count the number of samples in each class
+    class_counts = df['Label'].value_counts()
 
-    smote=SMOTE(n_jobs=-1,sampling_strategy={2:1000,4:1000})
+    # Set the desired number of samples in the minority classes after over-sampling
+    desired_samples = 1000
+
+    # Dictionary to store the additional samples needed for each minority class
+    additional_samples_dict = {}
+
+    # Iterate over each class to calculate additional samples needed
+    for class_label, class_count in class_counts.items():
+        if class_count < desired_samples:
+            additional_samples_dict[class_label] = 1000
+
+    additional_samples_dict
+
+    # from imblearn.over_sampling import SMOTE
+    smote=SMOTE(n_jobs=-1,sampling_strategy=additional_samples_dict)
+
+    # smote=SMOTE(n_jobs=-1,sampling_strategy={2:1000,4:1000})
 
     X_train, y_train = smote.fit_resample(X_train, y_train)
 
@@ -407,6 +438,8 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
     """## Machine Learning (ML) model training
     ### Training three base learners: LightGBM, XGBoost, CatBoost
     """
+
+    lgb_start_time = time.time()
 
     # Train the LightGBM algorithm
     lg = lgb.LGBMClassifier(num_leaves=lgb_num_leaves, learning_rate=lgb_learning_rate,
@@ -432,6 +465,10 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
     plt.ylabel("y_true")
     #plt.show()
 
+    lgb_end_time = time.time()
+
+    xgb_start_time = time.time()
+
     # Train the XGBoost algorithm
     xg = xgb.XGBClassifier(eta=xgb_eta, n_estimators=xgb_n_estimators,
                             max_depth=xgb_max_depth, colsample_bytree=xgb_colsample_bytree, min_child_weight=xgb_min_child_weight,
@@ -443,6 +480,7 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
     xg.fit(X_train_x, y_train)
     
     y_pred = xg.predict(X_test_x)
+
     print(classification_report(y_test,y_pred))
     print("Accuracy of XGBoost: "+ str(accuracy_score(y_test, y_pred)))
     print("Precision of XGBoost: "+ str(precision_score(y_test, y_pred, average='weighted')))
@@ -460,6 +498,10 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
     plt.ylabel("y_true")
     #plt.show()
 
+    xgb_end_time = time.time()
+
+    cb_start_time = time.time()
+
     # Train the CatBoost algorithm
     print("Initializing catboost")
     cb = cbt.CatBoostClassifier(iterations=cb_iterations, learning_rate=cb_learning_rate, depth=cb_depth,
@@ -471,6 +513,7 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
 
     print("Testing catboost")
     y_pred = cb.predict(X_test)
+
     print(classification_report(y_test,y_pred))
     print("Accuracy of CatBoost: "+ str(accuracy_score(y_test, y_pred)))
     print("Precision of CatBoost: "+ str(precision_score(y_test, y_pred, average='weighted')))
@@ -488,27 +531,40 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
     plt.ylabel("y_true")
     #plt.show()
 
+    cb_end_time = time.time()
+
+    lgb_execution_time = lgb_end_time - lgb_start_time
+    xgb_execution_time = xgb_end_time - xgb_start_time
+    cb_execution_time = cb_end_time - cb_start_time
+    execution_time = lgb_execution_time + xgb_execution_time + cb_execution_time
+
     if alg_to_run.lower() == "lightgbm":
         #print the accuracy score, precision score, recall, and f1 score of lightgbm
         print("Accuracy of LightGBM: "+ str(accuracy_score(y_test, lg_pred)))
         print("Precision of LightGBM: "+ str(precision_score(y_test, lg_pred, average='weighted')))
         print("Recall of LightGBM: "+ str(recall_score(y_test, lg_pred, average='weighted')))
         print("Average F1 of LightGBM: "+ str(f1_score(y_test, lg_pred, average='weighted')))
-        return accuracy_score(y_test, lg_pred), precision_score(y_test, lg_pred, average='weighted'), recall_score(y_test, lg_pred, average='weighted'), f1_score(y_test, lg_pred, average='weighted')#, lg_f1
+        print("F1 of LightGBM for each type of attack: "+ str(lg_f1))
+        print("Execution Time of LightGBM: "+ str(lgb_execution_time))
+        return accuracy_score(y_test, lg_pred), precision_score(y_test, lg_pred, average='weighted'), recall_score(y_test, lg_pred, average='weighted'), f1_score(y_test, lg_pred, average='weighted'), lg_f1, lgb_execution_time
     elif alg_to_run.lower() == "xgboost":
         #print the accuracy score, precision score, and f1 score of xgboost
         print("Accuracy of XGBoost: "+ str(accuracy_score(y_test, xg_pred)))
         print("Precision of XGBoost: "+ str(precision_score(y_test, xg_pred, average='weighted')))
         print("Recall of XGBoost: "+ str(recall_score(y_test, xg_pred, average='weighted')))
         print("Average F1 of XGBoost: "+ str(f1_score(y_test, xg_pred, average='weighted')))
-        return accuracy_score(y_test, xg_pred), precision_score(y_test, xg_pred, average='weighted'), recall_score(y_test, xg_pred, average='weighted'), f1_score(y_test, xg_pred, average='weighted')#, xg_f1
+        print("F1 of XGBoost for each type of attack: "+ str(xg_f1))
+        print("Execution Time of XGBoost: "+ str(xgb_execution_time))
+        return accuracy_score(y_test, xg_pred), precision_score(y_test, xg_pred, average='weighted'), recall_score(y_test, xg_pred, average='weighted'), f1_score(y_test, xg_pred, average='weighted'), xg_f1, xgb_execution_time
     elif alg_to_run.lower() == "catboost":
         #print the accuracy score, precision score, and f1 score of catboost
         print("Accuracy of CatBoost: "+ str(accuracy_score(y_test, cb_pred)))
         print("Precision of CatBoost: "+ str(precision_score(y_test, cb_pred, average='weighted')))
         print("Recall of CatBoost: "+ str(recall_score(y_test, cb_pred, average='weighted')))
         print("Average F1 of CatBoost: "+ str(f1_score(y_test, cb_pred, average='weighted')))
-        return accuracy_score(y_test, cb_pred), precision_score(y_test, cb_pred, average='weighted'), recall_score(y_test, cb_pred, average='weighted'), f1_score(y_test, cb_pred, average='weighted')#, cb_f1
+        print("F1 of CatBoost for each type of attack: "+ str(cb_f1))
+        print("Execution Time of CatBoost: "+ str(cb_execution_time))
+        return accuracy_score(y_test, cb_pred), precision_score(y_test, cb_pred, average='weighted'), recall_score(y_test, cb_pred, average='weighted'), f1_score(y_test, cb_pred, average='weighted'), cb_f1, cb_execution_time
     else:
         #find which model has the best accuracy, then print out that model's accuracy, precision, and f1 score
         lg_avg_f1 = f1_score(y_test, lg_pred, average='weighted')
@@ -520,19 +576,25 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
             print("Precision of LightGBM: "+ str(precision_score(y_test, lg_pred, average='weighted')))
             print("Recall of LightGBM: "+ str(recall_score(y_test, lg_pred, average='weighted')))
             print("Average F1 of LightGBM: "+ str(f1_score(y_test, lg_pred, average='weighted')))
-            return accuracy_score(y_test, lg_pred), precision_score(y_test, lg_pred, average='weighted'), recall_score(y_test, lg_pred, average='weighted'), f1_score(y_test, lg_pred, average='weighted')#, lg_f1
+            print("F1 of LightGBM for each type of attack: "+ str(lg_f1))
+            print("Execution Time overall: "+ str(execution_time))
+            return accuracy_score(y_test, lg_pred), precision_score(y_test, lg_pred, average='weighted'), recall_score(y_test, lg_pred, average='weighted'), f1_score(y_test, lg_pred, average='weighted'), lg_f1, execution_time
         elif xg_avg_f1 > lg_avg_f1 and xg_avg_f1 > cb_avg_f1:
             print("Accuracy of XGBoost: "+ str(accuracy_score(y_test, xg_pred)))
             print("Precision of XGBoost: "+ str(precision_score(y_test, xg_pred, average='weighted')))
             print("Recall of XGBoost: "+ str(recall_score(y_test, xg_pred, average='weighted')))
             print("Average F1 of XGBoost: "+ str(f1_score(y_test, xg_pred, average='weighted')))
-            return accuracy_score(y_test, xg_pred), precision_score(y_test, xg_pred, average='weighted'), recall_score(y_test, xg_pred, average='weighted'), f1_score(y_test, xg_pred, average='weighted')#, xg_f1
+            print("F1 of XGBoost for each type of attack: "+ str(xg_f1))
+            print("Execution Time overall: "+ str(execution_time))
+            return accuracy_score(y_test, xg_pred), precision_score(y_test, xg_pred, average='weighted'), recall_score(y_test, xg_pred, average='weighted'), f1_score(y_test, xg_pred, average='weighted'), xg_f1, execution_time
         else:
             print("Accuracy of CatBoost: "+ str(accuracy_score(y_test, cb_pred)))
             print("Precision of CatBoost: "+ str(precision_score(y_test, cb_pred, average='weighted')))
             print("Recall of CatBoost: "+ str(recall_score(y_test, cb_pred, average='weighted')))
             print("Average F1 of CatBoost: "+ str(f1_score(y_test, cb_pred, average='weighted')))
-            return accuracy_score(y_test, cb_pred), precision_score(y_test, cb_pred, average='weighted'), recall_score(y_test, cb_pred, average='weighted'), f1_score(y_test, cb_pred, average='weighted')#, cb_f1
+            print("F1 of CatBoost for each type of attack: "+ str(cb_f1))
+            print("Execution Time overall: "+ str(execution_time))
+            return accuracy_score(y_test, cb_pred), precision_score(y_test, cb_pred, average='weighted'), recall_score(y_test, cb_pred, average='weighted'), f1_score(y_test, cb_pred, average='weighted'), cb_f1, execution_time
 
 if __name__ == "__main__":
     main()
