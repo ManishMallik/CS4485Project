@@ -122,6 +122,32 @@ function App() {
   };
 
 
+  const Tooltip1 = ({ text }) => (
+    <span className="tooltip">
+      <span className="tooltiptext">{text}</span>
+      Accuracy:
+    </span>
+  );
+
+  const Tooltip2 = ({ text }) => (
+    <span className="tooltip">
+      <span className="tooltiptext">{text}</span>
+      F1-Score:
+    </span>
+  );
+  const Tooltip3 = ({ text }) => (
+    <span className="tooltip">
+      <span className="tooltiptext">{text}</span>
+      Precision:
+    </span>
+  );
+
+  const Tooltip4 = ({ text }) => (
+    <span className="tooltip">
+      <span className="tooltiptext">{text}</span>
+      Recall:
+    </span>
+  );
 
   return (
     <div className="App">
@@ -144,16 +170,41 @@ function App() {
           >MTH
           </button>
         </div>
+        <h2>Choose a Dataset</h2>
+        <div className="model-buttons">
+          <button
+            className={selectedData == 1 ? "selected" : " button"}
+            onClick={() => handleDataSelect(1)}
+          >CICIDS2017_sample.csv
+          </button>
+          <button
+            className={selectedData === 2 ? "selected" : "button"}
+            onClick={() => handleDataSelect(2)}
+          >CICIDS2017_sample_km.csv
+          </button>
+        </div>
       </div>
 
 
       <div className="top-left section">
         <h2>Results</h2>
         <div className="results">
-          <div><p>Accuracy: {round(result.accuracy)}</p></div>
-          <div><p>F1-Score: {round(result.f1score)}</p></div>
-          <div><p>Precision: {round(result.precision)}</p></div>
-          <div><p>Recall: {round(result.recall)}</p></div>
+          <div>
+            <Tooltip1 text="" />
+            <p>{round(result.accuracy)}</p>
+          </div>
+          <div>
+            <Tooltip2 text=""/>
+            <p>{round(result.f1score)}</p>
+          </div>
+          <div>
+            <Tooltip3 text=""/>
+            <p>{round(result.precision)}</p>
+            </div>
+          <div>
+            <Tooltip4 text=""/>
+            <p>{round(result.recall)}</p>
+          </div>
         </div>
       </div>
       <div className="bottom-right section">

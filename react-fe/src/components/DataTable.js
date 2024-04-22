@@ -68,6 +68,12 @@ const headCells = [
     label: 'Model',
   },
   {
+    id: 'data',
+    numeric: true,
+    disablePadding: true,
+    label: 'Data',
+  },
+  {
     id: 'f1score',
     numeric: true,
     disablePadding: false,
@@ -356,6 +362,7 @@ export default function EnhancedTable(props) {
                       {row.time}
                     </TableCell>
                     <TableCell align="right">{row.model}</TableCell>
+                    <TableCell align="right">{row.data}</TableCell>
                     <TableCell align="right">{row.f1score}</TableCell>
                     <TableCell align="right">{row.accuracy}</TableCell>
                     <TableCell align="right">{row.precision}</TableCell>
