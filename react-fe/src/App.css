@@ -35,14 +35,13 @@
   align-self: center;
   justify-self: center;
   height: 50%;
-  width: 70%;
+  width: 90%;
   align-items: center;
   justify-content: center;
   display: grid;
   background-color: #020F17;
-  grid-template-columns: 1fr;
-  grid-template-rows: repeat(4, 1fr);
-  gap: 20px;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0px;
   border-radius: 20px;
   padding: 2% 0;
 }
@@ -52,9 +51,8 @@
   justify-content: center;
 }
 
-.timeStamp{
-  grid-column: span 2; 
-  
+.extime{
+  grid-column: span 3; 
 }
 
 .section {

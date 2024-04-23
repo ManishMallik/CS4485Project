@@ -122,30 +122,10 @@ function App() {
   };
 
 
-  const Tooltip1 = ({ text }) => (
+  const Tooltip = ({ text, metricName }) => (
     <span className="tooltip">
       <span className="tooltiptext">{text}</span>
-      Accuracy:
-    </span>
-  );
-
-  const Tooltip2 = ({ text }) => (
-    <span className="tooltip">
-      <span className="tooltiptext">{text}</span>
-      F1-Score:
-    </span>
-  );
-  const Tooltip3 = ({ text }) => (
-    <span className="tooltip">
-      <span className="tooltiptext">{text}</span>
-      Precision:
-    </span>
-  );
-
-  const Tooltip4 = ({ text }) => (
-    <span className="tooltip">
-      <span className="tooltiptext">{text}</span>
-      Recall:
+      {metricName}:
     </span>
   );
 
@@ -190,20 +170,44 @@ function App() {
         <h2>Results</h2>
         <div className="results">
           <div>
-            <Tooltip1 text="" />
+            <Tooltip text="The accuracy metric measures the overall correctness of the model's predictions by comparing the number of correctly classified instances to the total number of instances." metricName="Accuracy" />
             <p>{round(result.accuracy)}</p>
           </div>
           <div>
-            <Tooltip2 text=""/>
+            <Tooltip text="The F1-Score is a combined metric of precision and recall. For an IDS, a high F1-Score indicates a good balance between correctly identifying intrusions while minimizing false positives." metricName="F1-Score"/>
             <p>{round(result.f1score)}</p>
           </div>
           <div>
-            <Tooltip3 text=""/>
+            <Tooltip text="Precision measures the accuracy of positive predictions made by the model. It signifies the proportion of correctly identified intrusions among all instances flagged as intrusions." metricName="Precision"/>
             <p>{round(result.precision)}</p>
             </div>
           <div>
-            <Tooltip4 text=""/>
+            <Tooltip text="Recall measures the ability of the model to identify all positive instances correctly. Recall indicates the proportion of correctly identified intrusions among all actual intrusions. A high recall implies fewer false negatives, ensuring that most intrusions are detected." metricName="Recall"/>
             <p>{round(result.recall)}</p>
+          </div>
+          <div>
+            <Tooltip text="The F1-Score of DoS assesses the model's ability to accurately detect instances of DoS attacks while balancing false positives and false negatives." metricName="F1 of DoS"/>
+            <p>{round(result.dos)}</p>
+          </div>
+          <div>
+            <Tooltip text="The F1-Score of Sniffing indicates how effectively the model identifies sniffing activities while considering both precision and recall." metricName="F1 of Sniffing"/>
+            <p>{round(result.sniffing)}</p>
+          </div>
+          <div>
+            <Tooltip text="This F1 score evaluates the model's capability to detect web-based attacks, such as SQL injection or cross-site scripting (XSS). It reflects the balance between accurately identifying web-based attacks and minimizing false alarms." metricName="F1 of Web Attack"/>
+            <p>{round(result.webattack)}</p>
+          </div>
+          <div>
+            <Tooltip text="This F1-Score indicates how well the model detects activities related to botnet attacks, including command-and-control (C&C) communication or malware propagation. It gauges the model's ability to distinguish botnet-related traffic from normal network behavior." metricName="F1 of Botnets"/>
+            <p>{round(result.botnets)}</p>
+          </div>
+          <div>
+            <Tooltip text="This F1-Score assesses the model's performance in identifying infiltration attempts, where attackers gain unauthorized access to a network or system. It represents the model's effectiveness in detecting intrusion attempts while minimizing both false positives and false negatives." metricName="F1 of Infiltration"/>
+            <p>{round(result.infiltration)}</p>
+          </div>
+          <div className="extime">
+            <Tooltip text="This is the total time it took to run the chosen model and dataset." metricName="Execution Time"/>
+            <p>{round(result.time)}</p>
           </div>
         </div>
       </div>
