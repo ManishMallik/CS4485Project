@@ -37,8 +37,9 @@ from sklearn.feature_selection import mutual_info_classif
 from imblearn.over_sampling import SMOTE
 from hyperopt import hp, fmin, tpe, STATUS_OK, Trials
 import pickle
+import time
 
-def main(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimators=100, xgb_colsample_bytree=1, xgb_min_child_weight=1,
+def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample.csv", alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimators=100, xgb_colsample_bytree=1, xgb_min_child_weight=1,
          rf_n_estimators=100, rf_max_depth=None, rf_min_samples_split=2, rf_min_samples_leaf=1, rf_max_features='sqrt', rf_criterion='gini',
          dt_max_depth=None, dt_min_samples_split=2, dt_min_samples_leaf=1, dt_max_features=None, dt_criterion='gini',
          et_n_estimators=100, et_max_depth=None, et_min_samples_split=2, et_min_samples_leaf=1, et_max_features='sqrt', et_criterion='gini'):
@@ -49,9 +50,10 @@ def main(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimat
     Due to the large size of this dataset, the sampled subsets of CICIDS2017 is used. The subsets are in the "data" folder.  
     If you want to use this code on other datasets (e.g., CAN-intrusion dataset), just change the dataset name and follow the same steps. The models in this code are generic models that can be used in any intrusion detection/network traffic datasets.
     """
+    processed_start = time.time()
 
     #Read dataset
-    df = pd.read_csv('https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample.csv')
+    df = pd.read_csv(filename)
     # The results in this code is based on the original CICIDS2017 dataset. Please go to cell [21] if you work on the sampled dataset.
 
     df
@@ -76,50 +78,52 @@ def main(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimat
 
     df.Label.value_counts()
 
-    # retain the minority class instances and sample the majority class instances
-    df_minor = df[(df['Label']==6)|(df['Label']==1)|(df['Label']==4)]
-    df_major = df.drop(df_minor.index)
+    if filename == "https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample.csv":
 
-    X = df_major.drop(['Label'],axis=1)
-    y = df_major.iloc[:, -1].values.reshape(-1,1)
-    y=np.ravel(y)
+        # retain the minority class instances and sample the majority class instances
+        df_minor = df[(df['Label']==6)|(df['Label']==1)|(df['Label']==4)]
+        df_major = df.drop(df_minor.index)
 
-    # use k-means to cluster the data samples and select a proportion of data from each cluster
-    kmeans = MiniBatchKMeans(n_clusters=1000, random_state=0).fit(X)
+        X = df_major.drop(['Label'],axis=1)
+        y = df_major.iloc[:, -1].values.reshape(-1,1)
+        y=np.ravel(y)
 
-    klabel=kmeans.labels_
-    df_major['klabel']=klabel
+        # use k-means to cluster the data samples and select a proportion of data from each cluster
+        kmeans = MiniBatchKMeans(n_clusters=1000, random_state=0).fit(X)
 
-    df_major['klabel'].value_counts()
+        klabel=kmeans.labels_
+        df_major['klabel']=klabel
 
-    cols = list(df_major)
-    cols.insert(78, cols.pop(cols.index('Label')))
-    df_major = df_major.loc[:, cols]
+        df_major['klabel'].value_counts()
 
-    df_major
+        cols = list(df_major)
+        cols.insert(78, cols.pop(cols.index('Label')))
+        df_major = df_major.loc[:, cols]
 
-    def typicalSampling(group):
-        name = group.name
-        frac = 0.008
-        return group.sample(frac=frac)
+        df_major
 
-    result = df_major.groupby(
-        'klabel', group_keys=False
-    ).apply(typicalSampling)
+        def typicalSampling(group):
+            name = group.name
+            frac = 0.008
+            return group.sample(frac=frac)
 
-    result['Label'].value_counts()
+        result = df_major.groupby(
+            'klabel', group_keys=False
+        ).apply(typicalSampling)
 
-    result
+        result['Label'].value_counts()
 
-    result = result.drop(['klabel'],axis=1)
-    result = result.append(df_minor)
+        result
 
-    result.to_csv('CICIDS2017.csv',index=0)
+        result = result.drop(['klabel'],axis=1)
+        result = result.append(df_minor)
 
-    """### split train set and test set"""
+        result.to_csv('CICIDS2017.csv',index=0)
 
-    # Read the sampled dataset
-    df=pd.read_csv('CICIDS2017.csv')
+        """### split train set and test set"""
+
+        # Read the sampled dataset
+        df=pd.read_csv('CICIDS2017.csv')
 
     X = df.drop(['Label'],axis=1).values
     y = df.iloc[:, -1].values.reshape(-1,1)
@@ -523,11 +527,37 @@ def main(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimat
 
     pd.Series(y_train).value_counts()
 
-    """### SMOTE to solve class-imbalance"""
+    # Count the number of samples in each class
+    class_counts = df['Label'].value_counts()
 
+    # Set the desired number of samples in the minority classes after over-sampling
+    desired_samples = 1000
+
+    # Dictionary to store the additional samples needed for each minority class
+    additional_samples_dict = {}
+
+    # Iterate over each class to calculate additional samples needed
+    for class_label, class_count in class_counts.items():
+        if class_count < desired_samples:
+            additional_samples_dict[class_label] = 1000
+
+    additional_samples_dict
+
+    from imblearn.over_sampling import SMOTE
+    smote=SMOTE(n_jobs=-1,sampling_strategy=additional_samples_dict)
+
+    '''
+    from imblearn.over_sampling import SMOTE
     smote=SMOTE(n_jobs=-1,sampling_strategy={2:1000,4:1000})
+    '''
+
+    # """### SMOTE to solve class-imbalance"""
+
+    # smote=SMOTE(n_jobs=-1,sampling_strategy={2:1000,4:1000})
 
     X_train, y_train = smote.fit_resample(X_train, y_train)
+
+    processed_end = time.time()
 
     pd.Series(y_train).value_counts()
 
@@ -568,6 +598,8 @@ def main(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimat
     #             max_evals=20)
     # print("XGBoost: Hyperopt estimated optimum {}".format(best))
 
+    xgb_start_time = time.time()
+
     xg = xgb.XGBClassifier(learning_rate=xgb_learning_rate, max_depth=xgb_max_depth, n_estimators=xgb_n_estimators,
                            colsample_bytree=xgb_colsample_bytree, min_child_weight=xgb_min_child_weight)
     xg.fit(X_train,y_train)
@@ -581,6 +613,8 @@ def main(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimat
     print('Recall of XGBoost: '+(str(recall)))
     print('F1-score of XGBoost: '+(str(fscore)))
     xg_fscore = fscore
+    _, _, xg_fscores, _ = precision_recall_fscore_support(y_true, y_predict, average=None)
+    print("All F1-scores of XGBoost: ", xg_fscores)
     print(classification_report(y_true,y_predict))
     cm=confusion_matrix(y_true,y_predict)
     f,ax=plt.subplots(figsize=(5,5))
@@ -588,6 +622,11 @@ def main(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimat
     plt.xlabel("y_pred")
     plt.ylabel("y_true")
     #plt.show()
+
+    xg_train = xg.predict(X_train)
+    xg_test = xg.predict(X_test)
+
+    xgb_end_time = time.time()
 
     """#### Apply RF"""
 
@@ -627,6 +666,8 @@ def main(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimat
     #             max_evals=20)
     # print("Random Forest: Hyperopt estimated optimum {}".format(best))
 
+    rf_start_time = time.time()
+
     rf_hpo = RandomForestClassifier(n_estimators=rf_n_estimators, max_depth=rf_max_depth, min_samples_split=rf_min_samples_split,
                                  min_samples_leaf=rf_min_samples_leaf, max_features=rf_max_features, criterion=rf_criterion, random_state=0)
     rf_hpo.fit(X_train,y_train)
@@ -640,6 +681,8 @@ def main(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimat
     print('Recall of RF: '+(str(recall)))
     print('F1-score of RF: '+(str(fscore)))
     rf_fscore = fscore
+    _, _, rf_fscores, _ = precision_recall_fscore_support(y_true, y_predict, average=None)
+    print("All F1-scores of RF: ", rf_fscores)
     print(classification_report(y_true,y_predict))
     cm=confusion_matrix(y_true,y_predict)
     f,ax=plt.subplots(figsize=(5,5))
@@ -647,6 +690,11 @@ def main(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimat
     plt.xlabel("y_pred")
     plt.ylabel("y_true")
     #plt.show()
+
+    rf_train = rf_hpo.predict(X_train)
+    rf_test = rf_hpo.predict(X_test)
+
+    rf_end_time = time.time()
 
     """#### Apply DT"""
 
@@ -684,6 +732,8 @@ def main(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimat
     #             max_evals=50)
     # print("Decision tree: Hyperopt estimated optimum {}".format(best))
 
+    dt_start_time = time.time()
+
     dt_hpo = DecisionTreeClassifier(max_depth=dt_max_depth, min_samples_split=dt_min_samples_split, min_samples_leaf=dt_min_samples_leaf,
                                  max_features=dt_max_features, criterion=dt_criterion, random_state=0)
     dt_hpo.fit(X_train,y_train)
@@ -697,6 +747,8 @@ def main(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimat
     print('Recall of DT: '+(str(recall)))
     print('F1-score of DT: '+(str(fscore)))
     dt_fscore = fscore
+    _, _, dt_fscores, _ = precision_recall_fscore_support(y_true, y_predict, average=None)
+    print("All F1-scores of DT: ", dt_fscores)
     print(classification_report(y_true,y_predict))
     cm=confusion_matrix(y_true,y_predict)
     f,ax=plt.subplots(figsize=(5,5))
@@ -704,6 +756,11 @@ def main(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimat
     plt.xlabel("y_pred")
     plt.ylabel("y_true")
     #plt.show()
+
+    dt_train = dt_hpo.predict(X_train)
+    dt_test = dt_hpo.predict(X_test)
+
+    dt_end_time = time.time()
 
     """#### Apply ET"""
 
@@ -743,6 +800,8 @@ def main(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimat
     #             max_evals=20)
     # print("Random Forest: Hyperopt estimated optimum {}".format(best))
 
+    et_start_time = time.time()
+
     et_hpo = ExtraTreesClassifier(n_estimators=et_n_estimators, max_depth=et_max_depth, min_samples_split=et_min_samples_split,
                               min_samples_leaf=et_min_samples_leaf, max_features=et_max_features, criterion=et_criterion, random_state=0)
     et_hpo.fit(X_train,y_train)
@@ -756,6 +815,8 @@ def main(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimat
     print('Recall of ET: '+(str(recall)))
     print('F1-score of ET: '+(str(fscore)))
     et_fscore = fscore
+    _, _, et_fscores, _ = precision_recall_fscore_support(y_true, y_predict, average=None)
+    print("All F1-scores of ET: ", et_fscores)
     print(classification_report(y_true,y_predict))
     cm=confusion_matrix(y_true,y_predict)
     f,ax=plt.subplots(figsize=(5,5))
@@ -764,57 +825,151 @@ def main(alg_to_run="all", xgb_learning_rate=0.1, xgb_max_depth=3, xgb_n_estimat
     plt.ylabel("y_true")
     #plt.show()
 
+    et_train = et_hpo.predict(X_train)
+    et_test = et_hpo.predict(X_test)
+
+    et_end_time = time.time()
+
+    stk_start_time = time.time()
+
+    # Use the outputs of 4 base models to construct a new ensemble model
+    base_predictions_train = pd.DataFrame( {
+        'DecisionTree': dt_train.ravel(),
+            'RandomForest': rf_train.ravel(),
+        'ExtraTrees': et_train.ravel(),
+        'XgBoost': xg_train.ravel(),
+        })
+    base_predictions_train.head(5)
+
+    dt_train=dt_train.reshape(-1, 1)
+    et_train=et_train.reshape(-1, 1)
+    rf_train=rf_train.reshape(-1, 1)
+    xg_train=xg_train.reshape(-1, 1)
+    dt_test=dt_test.reshape(-1, 1)
+    et_test=et_test.reshape(-1, 1)
+    rf_test=rf_test.reshape(-1, 1)
+    xg_test=xg_test.reshape(-1, 1)
+
+    x_train = np.concatenate(( dt_train, et_train, rf_train, xg_train), axis=1)
+    x_test = np.concatenate(( dt_test, et_test, rf_test, xg_test), axis=1)
+
+    # stk = xgb.XGBClassifier().fit(x_train, y_train)
+    stk = xgb.XGBClassifier(learning_rate=xgb_learning_rate, max_depth=xgb_max_depth, n_estimators=xgb_n_estimators,
+                           colsample_bytree=xgb_colsample_bytree, min_child_weight=xgb_min_child_weight).fit(x_train, y_train)
+
+    y_predict=stk.predict(x_test)
+    stk_predict = y_predict
+    y_true=y_test
+    stk_score=accuracy_score(y_true,y_predict)
+    print('Accuracy of Stacking: '+ str(stk_score))
+    precision,recall,fscore,none= precision_recall_fscore_support(y_true, y_predict, average='weighted')
+    print('Precision of Stacking: '+(str(precision)))
+    print('Recall of Stacking: '+(str(recall)))
+    print('F1-score of Stacking: '+(str(fscore)))
+    stk_fscore = fscore
+    _, _, stk_fscores, _ = precision_recall_fscore_support(y_true, y_predict, average=None)
+    print("All F1-scores of Stacking: ", stk_fscores)
+    print(classification_report(y_true,y_predict))
+    cm=confusion_matrix(y_true,y_predict)
+    f,ax=plt.subplots(figsize=(5,5))
+    sns.heatmap(cm,annot=True,linewidth=0.5,linecolor="red",fmt=".0f",ax=ax)
+    plt.xlabel("y_pred")
+    plt.ylabel("y_true")
+    #plt.show()
+
+    stk_end_time = time.time()
+
+    process_time = processed_end - processed_start
+    xgb_time = xgb_end_time - xgb_start_time
+    rf_time = rf_end_time - rf_start_time
+    dt_time = dt_end_time - dt_start_time
+    et_time = et_end_time - et_start_time
+    stk_time = stk_end_time - stk_start_time
+    total_time = xgb_time + rf_time + dt_time + et_time + stk_time + process_time
+
     if alg_to_run == "decision tree":
         #print the accuracy, precision, and f1 score of the decision tree model
         print('Accuracy of DT: ' + str(dt_score))
         precision, recall, fscore, none = precision_recall_fscore_support(y_true, dt_predict, average='weighted')
         print('Precision of DT: ' + str(precision))
         print('F1-score of DT: ' + str(fscore))
-        return dt_score, precision, recall, fscore
+        print('All F1-scores of DT: ', dt_fscores)
+        print('Execution time of DT: ' + str(dt_time + process_time) + ' seconds')
+        total = dt_time + process_time
+        return dt_score, precision, recall, fscore, dt_fscores, total
     elif alg_to_run == "random forest":
         #print the accuracy, precision, and f1 score of the random forest model
         print('Accuracy of RF: ' + str(rf_score))
         precision, recall, fscore, none = precision_recall_fscore_support(y_true, rf_predict, average='weighted')
         print('Precision of RF: ' + str(precision))
         print('F1-score of RF: ' + str(fscore))
-        return rf_score, precision, recall, fscore
+        print('All F1-scores of RF: ', rf_fscores)
+        print('Execution time of RF: ' + str(rf_time + process_time) + ' seconds')
+        total = rf_time + process_time
+        return rf_score, precision, recall, fscore, rf_fscores, total
     elif alg_to_run == "extra trees":
         #print the accuracy, precision, and f1 score of the extra trees model
         print('Accuracy of ET: ' + str(et_score))
         precision, recall, fscore, none = precision_recall_fscore_support(y_true, et_predict, average='weighted')
         print('Precision of ET: ' + str(precision))
         print('F1-score of ET: ' + str(fscore))
-        return et_score, precision, recall, fscore
+        print('All F1-scores of ET: ', et_fscores)
+        print('Execution time of ET: ' + str(et_time + process_time) + ' seconds')
+        total = et_time + process_time
+        return et_score, precision, recall, fscore, et_fscores, total
     elif alg_to_run == "xgboost":
         #print the accuracy, precision, and f1 score of the xgboost model
         print('Accuracy of XGBoost: ' + str(xg_score))
         precision, recall, fscore, none = precision_recall_fscore_support(y_true, xg_predict, average='weighted')
         print('Precision of XGBoost: ' + str(precision))
         print('F1-score of XGBoost: ' + str(fscore))
-        return xg_score, precision, recall, fscore
+        print('All F1-scores of XGBoost: ', xg_fscores)
+        print('Execution time of XGBoost: ' + str(xgb_time + process_time) + ' seconds')
+        total = xgb_time + process_time
+        return xg_score, precision, recall, fscore, xg_fscores, total
+    elif alg_to_run == "stacking":
+        #print the accuracy, precision, and f1 score of the stacking model
+        print('Accuracy of Stacking: ' + str(stk_score))
+        precision, recall, fscore, none = precision_recall_fscore_support(y_true, stk_predict, average='weighted')
+        print('Precision of Stacking: ' + str(precision))
+        print('F1-score of Stacking: ' + str(fscore))
+        print('All F1-scores of Stacking: ', stk_fscores)
+        print('Execution time of Stacking: ' + str(stk_time + process_time) + ' seconds')
+        total = stk_time + process_time
+        return stk_score, precision, recall, fscore, stk_fscores, process_time
     else:
         #find the model with the max accuracy, then print out that model's accuracy, precision, and f1 score
-        model_fscores = {"Decision Tree": dt_fscore, "Random Forest": rf_fscore, "Extra Trees": et_fscore, "XGBoost": xg_fscore}
+        model_fscores = {"Decision Tree": dt_fscore, "Random Forest": rf_fscore, "Extra Trees": et_fscore, "XGBoost": xg_fscore, "Stacking": stk_fscore}
         best_model = max(model_fscores, key=model_fscores.get)
         print('Best model: ' + best_model)
         #print the best_model accuracy, recall, and f1 score
         if best_model == "Decision Tree":
             accuracy = dt_score
             precision, recall, fscore, none = precision_recall_fscore_support(y_true, dt_predict, average='weighted')
+            fscores = dt_fscores
         elif best_model == "Random Forest":
             accuracy = rf_score
             precision, recall, fscore, none = precision_recall_fscore_support(y_true, rf_predict, average='weighted')
+            fscores = rf_fscores
         elif best_model == "Extra Trees":
             accuracy = et_score
             precision, recall, fscore, none = precision_recall_fscore_support(y_true, et_predict, average='weighted')
-        else:
+            fscores = et_fscores
+        elif best_model == "XGBoost":
             accuracy = xg_score
             precision, recall, fscore, none = precision_recall_fscore_support(y_true, xg_predict, average='weighted')
+            fscores = xg_fscores
+        else:
+            accuracy = stk_score
+            precision, recall, fscore, none = precision_recall_fscore_support(y_true, stk_predict, average='weighted')
+            fscores = stk_fscores
         print('Accuracy of ' + best_model + ': ' + str(accuracy))
         print('Precision of ' + best_model + ': ' + str(precision))
         print('Recall of ' + best_model + ': ' + str(recall))
         print('F1-score of ' + best_model + ': ' + str(model_fscores[best_model]))
-        return accuracy, precision, recall, model_fscores[best_model]
+        print('All F1-scores of ' + best_model + ': ', fscores)
+        print('Execution time: ' + str(total_time) + ' seconds')
+        return accuracy, precision, recall, model_fscores[best_model], fscores, total_time
 
 if __name__ == '__main__':
     main()
