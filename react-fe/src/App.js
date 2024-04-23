@@ -186,24 +186,32 @@ function App() {
             <p>{round(result.recall)}</p>
           </div>
           <div>
-            <Tooltip text="The F1-Score of DoS assesses the model's ability to accurately detect instances of DoS attacks while balancing false positives and false negatives." metricName="F1 of DoS"/>
-            <p>{round(result.dos)}</p>
+            <Tooltip text="The F1-Score of BENIGN assesses the model's ability to accurately classify normal network traffic while balancing false positives and false negatives." metricName="F1 of BENIGN"/>
+            <p>{round(result.benign)}</p>
           </div>
           <div>
-            <Tooltip text="The F1-Score of Sniffing indicates how effectively the model identifies sniffing activities while considering both precision and recall." metricName="F1 of Sniffing"/>
-            <p>{round(result.sniffing)}</p>
+              <Tooltip text="The F1-Score of Bot indicates how effectively the model identifies botnet-related activities, such as command-and-control (C&C) communication or malware propagation, while considering both precision and recall." metricName="F1 of Bot"/>
+              <p>{round(result.bot)}</p>
           </div>
           <div>
-            <Tooltip text="This F1 score evaluates the model's capability to detect web-based attacks, such as SQL injection or cross-site scripting (XSS). It reflects the balance between accurately identifying web-based attacks and minimizing false alarms." metricName="F1 of Web Attack"/>
-            <p>{round(result.webattack)}</p>
+              <Tooltip text="This F1 score evaluates the model's capability to detect brute-force attacks, such as password guessing or credential stuffing, targeting web applications. It reflects the balance between accurately identifying brute-force attacks and minimizing false alarms." metricName="F1 of BruteForce"/>
+              <p>{round(result.bruteforce)}</p>
           </div>
           <div>
-            <Tooltip text="This F1-Score indicates how well the model detects activities related to botnet attacks, including command-and-control (C&C) communication or malware propagation. It gauges the model's ability to distinguish botnet-related traffic from normal network behavior." metricName="F1 of Botnets"/>
-            <p>{round(result.botnets)}</p>
+              <Tooltip text="This F1-Score indicates how well the model detects Denial-of-Service (DoS) attacks, including flooding or resource depletion attempts, gauging the model's ability to distinguish DoS-related traffic from normal network behavior." metricName="F1 of DoS"/>
+              <p>{round(result.dos)}</p>
           </div>
           <div>
-            <Tooltip text="This F1-Score assesses the model's performance in identifying infiltration attempts, where attackers gain unauthorized access to a network or system. It represents the model's effectiveness in detecting intrusion attempts while minimizing both false positives and false negatives." metricName="F1 of Infiltration"/>
-            <p>{round(result.infiltration)}</p>
+              <Tooltip text="This F1-Score assesses the model's performance in identifying infiltration attempts, where attackers gain unauthorized access to a network or system. It represents the model's effectiveness in detecting intrusion attempts while minimizing both false positives and false negatives." metricName="F1 of Infiltration"/>
+              <p>{round(result.infiltration)}</p>
+          </div>
+          <div>
+              <Tooltip text="This F1-Score evaluates the model's ability to detect port scanning activities, where attackers search for open ports and services on a network, while balancing false positives and false negatives." metricName="F1 of PortScan"/>
+              <p>{round(result.portscan)}</p>
+          </div>
+          <div>
+              <Tooltip text="This F1-Score assesses the model's performance in identifying web-based attacks, such as SQL injection or cross-site scripting (XSS). It reflects the balance between accurately identifying web-based attacks and minimizing false alarms." metricName="F1 of WebAttack"/>
+              <p>{round(result.webattack)}</p>
           </div>
           <div className="extime">
             <Tooltip text="This is the total time it took to run the chosen model and dataset." metricName="Execution Time"/>
