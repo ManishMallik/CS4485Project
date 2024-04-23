@@ -50,6 +50,7 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
     Due to the large size of this dataset, the sampled subsets of CICIDS2017 is used. The subsets are in the "data" folder.  
     If you want to use this code on other datasets (e.g., CAN-intrusion dataset), just change the dataset name and follow the same steps. The models in this code are generic models that can be used in any intrusion detection/network traffic datasets.
     """
+    processed_start = time.time()
 
     #Read dataset
     df = pd.read_csv(filename)
@@ -556,6 +557,8 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
 
     X_train, y_train = smote.fit_resample(X_train, y_train)
 
+    processed_end = time.time()
+
     pd.Series(y_train).value_counts()
 
     """## Machine learning model training
@@ -876,12 +879,13 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
 
     stk_end_time = time.time()
 
+    process_time = processed_end - processed_start
     xgb_time = xgb_end_time - xgb_start_time
     rf_time = rf_end_time - rf_start_time
     dt_time = dt_end_time - dt_start_time
     et_time = et_end_time - et_start_time
     stk_time = stk_end_time - stk_start_time
-    total_time = xgb_time + rf_time + dt_time + et_time + stk_time
+    total_time = xgb_time + rf_time + dt_time + et_time + stk_time + process_time
 
     if alg_to_run == "decision tree":
         #print the accuracy, precision, and f1 score of the decision tree model
@@ -890,8 +894,9 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
         print('Precision of DT: ' + str(precision))
         print('F1-score of DT: ' + str(fscore))
         print('All F1-scores of DT: ', dt_fscores)
-        print('Execution time of DT: ' + str(dt_time) + ' seconds')
-        return dt_score, precision, recall, fscore, dt_fscores, dt_time
+        print('Execution time of DT: ' + str(dt_time + process_time) + ' seconds')
+        total = dt_time + process_time
+        return dt_score, precision, recall, fscore, dt_fscores, total
     elif alg_to_run == "random forest":
         #print the accuracy, precision, and f1 score of the random forest model
         print('Accuracy of RF: ' + str(rf_score))
@@ -899,8 +904,9 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
         print('Precision of RF: ' + str(precision))
         print('F1-score of RF: ' + str(fscore))
         print('All F1-scores of RF: ', rf_fscores)
-        print('Execution time of RF: ' + str(rf_time) + ' seconds')
-        return rf_score, precision, recall, fscore, rf_fscores, rf_time
+        print('Execution time of RF: ' + str(rf_time + process_time) + ' seconds')
+        total = rf_time + process_time
+        return rf_score, precision, recall, fscore, rf_fscores, total
     elif alg_to_run == "extra trees":
         #print the accuracy, precision, and f1 score of the extra trees model
         print('Accuracy of ET: ' + str(et_score))
@@ -908,8 +914,9 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
         print('Precision of ET: ' + str(precision))
         print('F1-score of ET: ' + str(fscore))
         print('All F1-scores of ET: ', et_fscores)
-        print('Execution time of ET: ' + str(et_time) + ' seconds')
-        return et_score, precision, recall, fscore, et_fscores, et_time
+        print('Execution time of ET: ' + str(et_time + process_time) + ' seconds')
+        total = et_time + process_time
+        return et_score, precision, recall, fscore, et_fscores, total
     elif alg_to_run == "xgboost":
         #print the accuracy, precision, and f1 score of the xgboost model
         print('Accuracy of XGBoost: ' + str(xg_score))
@@ -917,8 +924,9 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
         print('Precision of XGBoost: ' + str(precision))
         print('F1-score of XGBoost: ' + str(fscore))
         print('All F1-scores of XGBoost: ', xg_fscores)
-        print('Execution time of XGBoost: ' + str(xgb_time) + ' seconds')
-        return xg_score, precision, recall, fscore, xg_fscores, xgb_time
+        print('Execution time of XGBoost: ' + str(xgb_time + process_time) + ' seconds')
+        total = xgb_time + process_time
+        return xg_score, precision, recall, fscore, xg_fscores, total
     elif alg_to_run == "stacking":
         #print the accuracy, precision, and f1 score of the stacking model
         print('Accuracy of Stacking: ' + str(stk_score))
@@ -926,8 +934,9 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
         print('Precision of Stacking: ' + str(precision))
         print('F1-score of Stacking: ' + str(fscore))
         print('All F1-scores of Stacking: ', stk_fscores)
-        print('Execution time of Stacking: ' + str(stk_time) + ' seconds')
-        return stk_score, precision, recall, fscore, stk_fscores, stk_time
+        print('Execution time of Stacking: ' + str(stk_time + process_time) + ' seconds')
+        total = stk_time + process_time
+        return stk_score, precision, recall, fscore, stk_fscores, process_time
     else:
         #find the model with the max accuracy, then print out that model's accuracy, precision, and f1 score
         model_fscores = {"Decision Tree": dt_fscore, "Random Forest": rf_fscore, "Extra Trees": et_fscore, "XGBoost": xg_fscore, "Stacking": stk_fscore}

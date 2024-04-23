@@ -379,6 +379,8 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
          cb_iterations=100, cb_learning_rate=0.03, cb_depth=6, cb_l2_leaf_reg=3, cb_colsample_bytree=1.0, cb_border_count=254,
          cb_random_strength=1.0, cb_bootstrap_type='Bayesian', cb_early_stopping_rounds=10):
     
+    processed_start = time.time()
+    
     if filename == "https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv":
         df = pd.read_csv("https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-Detection-System-Using-Machine-Learning/main/data/CICIDS2017_sample_km.csv")
         # df = pd.read_csv("data/CICIDS2017_sample.csv")
@@ -432,6 +434,8 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
     # smote=SMOTE(n_jobs=-1,sampling_strategy={2:1000,4:1000})
 
     X_train, y_train = smote.fit_resample(X_train, y_train)
+
+    processed_end = time.time()
 
     pd.Series(y_train).value_counts()
 
@@ -533,10 +537,11 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
 
     cb_end_time = time.time()
 
+    processed_time = processed_end - processed_start
     lgb_execution_time = lgb_end_time - lgb_start_time
     xgb_execution_time = xgb_end_time - xgb_start_time
     cb_execution_time = cb_end_time - cb_start_time
-    execution_time = lgb_execution_time + xgb_execution_time + cb_execution_time
+    execution_time = lgb_execution_time + xgb_execution_time + cb_execution_time + processed_time
 
     if alg_to_run.lower() == "lightgbm":
         #print the accuracy score, precision score, recall, and f1 score of lightgbm
@@ -545,8 +550,9 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
         print("Recall of LightGBM: "+ str(recall_score(y_test, lg_pred, average='weighted')))
         print("Average F1 of LightGBM: "+ str(f1_score(y_test, lg_pred, average='weighted')))
         print("F1 of LightGBM for each type of attack: "+ str(lg_f1))
-        print("Execution Time of LightGBM: "+ str(lgb_execution_time))
-        return accuracy_score(y_test, lg_pred), precision_score(y_test, lg_pred, average='weighted'), recall_score(y_test, lg_pred, average='weighted'), f1_score(y_test, lg_pred, average='weighted'), lg_f1, lgb_execution_time
+        print("Execution Time of LightGBM: "+ str(lgb_execution_time + processed_time))
+        total_time = lgb_execution_time + processed_time
+        return accuracy_score(y_test, lg_pred), precision_score(y_test, lg_pred, average='weighted'), recall_score(y_test, lg_pred, average='weighted'), f1_score(y_test, lg_pred, average='weighted'), lg_f1, total_time
     elif alg_to_run.lower() == "xgboost":
         #print the accuracy score, precision score, and f1 score of xgboost
         print("Accuracy of XGBoost: "+ str(accuracy_score(y_test, xg_pred)))
@@ -554,8 +560,9 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
         print("Recall of XGBoost: "+ str(recall_score(y_test, xg_pred, average='weighted')))
         print("Average F1 of XGBoost: "+ str(f1_score(y_test, xg_pred, average='weighted')))
         print("F1 of XGBoost for each type of attack: "+ str(xg_f1))
-        print("Execution Time of XGBoost: "+ str(xgb_execution_time))
-        return accuracy_score(y_test, xg_pred), precision_score(y_test, xg_pred, average='weighted'), recall_score(y_test, xg_pred, average='weighted'), f1_score(y_test, xg_pred, average='weighted'), xg_f1, xgb_execution_time
+        print("Execution Time of XGBoost: "+ str(xgb_execution_time + processed_time))
+        total_time = xgb_execution_time + processed_time
+        return accuracy_score(y_test, xg_pred), precision_score(y_test, xg_pred, average='weighted'), recall_score(y_test, xg_pred, average='weighted'), f1_score(y_test, xg_pred, average='weighted'), xg_f1, total_time
     elif alg_to_run.lower() == "catboost":
         #print the accuracy score, precision score, and f1 score of catboost
         print("Accuracy of CatBoost: "+ str(accuracy_score(y_test, cb_pred)))
@@ -563,8 +570,9 @@ def main(filename="https://raw.githubusercontent.com/Western-OC2-Lab/Intrusion-D
         print("Recall of CatBoost: "+ str(recall_score(y_test, cb_pred, average='weighted')))
         print("Average F1 of CatBoost: "+ str(f1_score(y_test, cb_pred, average='weighted')))
         print("F1 of CatBoost for each type of attack: "+ str(cb_f1))
-        print("Execution Time of CatBoost: "+ str(cb_execution_time))
-        return accuracy_score(y_test, cb_pred), precision_score(y_test, cb_pred, average='weighted'), recall_score(y_test, cb_pred, average='weighted'), f1_score(y_test, cb_pred, average='weighted'), cb_f1, cb_execution_time
+        print("Execution Time of CatBoost: "+ str(cb_execution_time + processed_time))
+        total_time = cb_execution_time + processed_time
+        return accuracy_score(y_test, cb_pred), precision_score(y_test, cb_pred, average='weighted'), recall_score(y_test, cb_pred, average='weighted'), f1_score(y_test, cb_pred, average='weighted'), cb_f1, total_time
     else:
         #find which model has the best accuracy, then print out that model's accuracy, precision, and f1 score
         lg_avg_f1 = f1_score(y_test, lg_pred, average='weighted')
