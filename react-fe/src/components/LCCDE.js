@@ -13,7 +13,7 @@ const LCCDE = (props) => {
     lgbm_lr: '0.1',
     lgbm_leaves: '31',
     lgbm_n_est: '100',
-    lgbm_depth: '1',
+    lgbm_depth: '-1',
 
     xgb_lr: '0.3',
     xgb_depth: '6',
